@@ -33,7 +33,7 @@ class Game:
             self.stdscr.addstr(i, j * 2, symbol, curses.color_pair(color_pair_index))
 
             if j < self.grid.shape[1] - 1:
-                self.stdscr.addstr(i, (j * 2) + 1, " ")
+                self.stdscr.addstr(i, (j * 2) + 1, Game.empty_symbol)
 
         self.stdscr.getch()
 
