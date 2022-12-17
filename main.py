@@ -21,8 +21,9 @@ class Game:
 
     def play(self):
         self.refresh_grid()
+        print(self.stdscr.getch())
 
-    def draw(self):
+    def draw(self, refreshing=False):
         self.stdscr.clear()
 
         for (i, j), symbol in np.ndenumerate(self.grid):
@@ -35,12 +36,14 @@ class Game:
             if j < self.grid.shape[1] - 1:
                 self.stdscr.addstr(i, (j * 2) + 1, Game.empty_symbol)
 
-        self.stdscr.getch()
+        if refreshing:
+            self.stdscr.addstr(self.grid.shape[1] + 2, 0, "Press the \"S\" key to skip.")
 
     def refresh_grid(self):
         self.stdscr.timeout(100)
-        self.draw()
+        self.draw(True)
 
+        skipped = False
         while True:
             match = self.find_match()
 
@@ -61,15 +64,21 @@ class Game:
             for point in points_to_remove:
                 self.grid[point[0], point[1]] = Game.empty_symbol
 
-            self.draw()
+            self.draw(True)
             empty_points = points_to_remove
             while empty_points.size > 0:
                 self.shift(empty_points)
                 empty_points = self.find_empty_points()
-                self.draw()
+                self.draw(True)
+
+                if not skipped:
+                    skipped = self.stdscr.getch() == ord("s")
+
+            if not skipped:
+                skipped = self.stdscr.getch() == ord("s")
 
         # Remove timeout - make input blocking without a timeout
-        # self.stdscr.timeout(100)
+        self.stdscr.timeout(-1)
 
     def find_matches_in_direction(self, direction, match_length):
         slice_top_left_indices = np.stack([
