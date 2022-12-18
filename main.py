@@ -136,7 +136,7 @@ class Game:
 
     def refresh_grid(self):
         self.stdscr.timeout(100)
-        skip_hint = "Press the \"S\" key to skip..."
+        skip_hint = "Press any key to skip..."
         self.draw(skip_hint)
 
         skipped = False
@@ -168,10 +168,10 @@ class Game:
                 self.draw(skip_hint)
 
                 if not skipped:
-                    skipped = self.stdscr.getch() == ord("s")
+                    skipped = self.stdscr.getch() != -1
 
             if not skipped:
-                skipped = self.stdscr.getch() == ord("s")
+                skipped = self.stdscr.getch() != -1
 
         # Remove timeout - make input blocking without a timeout
         self.stdscr.timeout(-1)
