@@ -21,9 +21,99 @@ class Game:
 
     def play(self):
         self.refresh_grid()
-        print(self.stdscr.getch())
 
-    def draw(self, refreshing=False):
+        while True:
+            selection_valid = False
+            while not selection_valid:
+                selected_point1, selected_point2 = self.select_points_to_swap()
+                prev_grid = self.grid.copy()
+                self.swap(selected_point1, selected_point2)
+
+                selection_valid = self.find_match() is not None
+                if selection_valid:
+                    self.draw(f"Swapped {self.grid[selected_point1[0], selected_point1[1]]} {selected_point1} "
+                              f"and {self.grid[selected_point2[0], selected_point2[1]]} {selected_point2}\n"
+                              f"Press any key to continue...", None)
+                    self.stdscr.getch()
+                else:
+                    self.grid = prev_grid
+                    self.draw(hint="Swap would not result in a match; please try again\nPress any key to continue...")
+                    self.stdscr.getch()
+
+            self.refresh_grid()
+
+    def select_points_to_swap(self):
+        def generate_hint(selected_position, selected_position_index):
+            return (
+                f"Select two symbols to swap...\n"
+                f"Selecting symbol #{selected_position_index + 1}\n"
+                f"Press arrow keys (← ↑ → ↓) to move selection; press enter to continue\n"
+                f"{self.grid[selected_position[0], selected_position[1]]} {selected_position}"
+            )
+
+        def get_available_neighbor(selected_position1):
+            if selected_position1[0] == 0:
+                if selected_position1[1] == 0:
+                    return selected_position1 + np.array([0, 1])
+                else:
+                    return selected_position1 + np.array([-1, 0])
+            return selected_position1 + np.array([-1, 0])
+
+        # Initialise selected position to center
+        selected_position1 = (np.array(self.grid.shape) - 1) // 2
+        self.draw(generate_hint(selected_position1, 0), [selected_position1])
+        selecting = True
+        while selecting:
+            key = self.stdscr.getch()
+
+            # If key is an arrow key then move the selected position
+            # If key is enter then set selected position
+            match key:
+                case curses.KEY_UP:
+                    selected_position1[0] -= 1
+                case curses.KEY_DOWN:
+                    selected_position1[0] += 1
+                case curses.KEY_LEFT:
+                    selected_position1[1] -= 1
+                case curses.KEY_RIGHT:
+                    selected_position1[1] += 1
+                case curses.KEY_ENTER | 10 | 13:
+                    selecting = False
+
+            # Wrap selected position
+            selected_position1 = selected_position1 % self.grid.shape
+
+            self.draw(generate_hint(selected_position1, 0), [selected_position1])
+
+        selected_position2 = get_available_neighbor(selected_position1)
+        self.draw(generate_hint(selected_position2, 1), [selected_position1, selected_position2])
+        selecting = True
+        while selecting:
+            key = self.stdscr.getch()
+
+            # If key is an arrow key then move the selected position
+            # If key is enter then set selected position
+            match key:
+                case curses.KEY_UP:
+                    if self.is_point_inside_grid(selected_position1 + np.array([-1, 0])):
+                        selected_position2 = selected_position1 + np.array([-1, 0])
+                case curses.KEY_DOWN:
+                    if self.is_point_inside_grid(selected_position1 + np.array([1, 0])):
+                        selected_position2 = selected_position1 + np.array([1, 0])
+                case curses.KEY_LEFT:
+                    if self.is_point_inside_grid(selected_position1 + np.array([0, -1])):
+                        selected_position2 = selected_position1 + np.array([0, -1])
+                case curses.KEY_RIGHT:
+                    if self.is_point_inside_grid(selected_position1 + np.array([0, 1])):
+                        selected_position2 = selected_position1 + np.array([0, 1])
+                case curses.KEY_ENTER | 10 | 13:
+                    selecting = False
+
+            self.draw(generate_hint(selected_position2, 1), [selected_position1, selected_position2])
+
+        return selected_position1, selected_position2
+
+    def draw(self, hint, selected_positions=None):
         self.stdscr.clear()
 
         for (i, j), symbol in np.ndenumerate(self.grid):
@@ -31,17 +121,23 @@ class Game:
                 color_pair_index = self.symbols.index(symbol) + 1
             except ValueError:
                 color_pair_index = 0
+
+            if selected_positions is not None\
+                    and any(((i, j) == selected_position).all() for selected_position in selected_positions):
+                color_pair_index += len(self.colors)
+
             self.stdscr.addstr(i, j * 2, symbol, curses.color_pair(color_pair_index))
 
             if j < self.grid.shape[1] - 1:
                 self.stdscr.addstr(i, (j * 2) + 1, Game.empty_symbol)
 
-        if refreshing:
-            self.stdscr.addstr(self.grid.shape[1] + 2, 0, "Press the \"S\" key to skip.")
+        if hint is not None:
+            self.stdscr.addstr(self.grid.shape[1] + 2, 0, hint)
 
     def refresh_grid(self):
         self.stdscr.timeout(100)
-        self.draw(True)
+        skip_hint = "Press the \"S\" key to skip..."
+        self.draw(skip_hint)
 
         skipped = False
         while True:
@@ -64,12 +160,12 @@ class Game:
             for point in points_to_remove:
                 self.grid[point[0], point[1]] = Game.empty_symbol
 
-            self.draw(True)
+            self.draw(skip_hint)
             empty_points = points_to_remove
             while empty_points.size > 0:
                 self.shift(empty_points)
                 empty_points = self.find_empty_points()
-                self.draw(True)
+                self.draw(skip_hint)
 
                 if not skipped:
                     skipped = self.stdscr.getch() == ord("s")
@@ -184,6 +280,10 @@ class Game:
             # Fill empty point at top with a random symbol
             self.grid[0, j] = Game.get_random_symbol()
 
+    def swap(self, selected_point1, selected_point2):
+        self.grid[selected_point1[0], selected_point1[1]], self.grid[selected_point2[0], selected_point2[1]] = \
+            self.grid[selected_point2[0], selected_point2[1]], self.grid[selected_point1[0], selected_point1[1]]
+
 
 def main(stdscr):
     random.seed(1234)  # For debugging
@@ -199,6 +299,7 @@ def main(stdscr):
     ]
     for i, color in enumerate(colors):
         curses.init_pair(i + 1, color, curses.COLOR_BLACK)
+        curses.init_pair(len(colors) + i + 1, curses.COLOR_BLACK, color)
 
     # Show cursor
     curses.curs_set(1)
