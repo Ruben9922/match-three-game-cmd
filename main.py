@@ -1,5 +1,6 @@
 import curses
 import random
+from typing import Optional
 
 import numpy as np
 
@@ -8,18 +9,18 @@ class Game:
     symbols = ["A", "B", "C", "D", "E", "F"]
     empty_symbol = " "
 
-    def __init__(self, stdscr, colors):
+    def __init__(self, stdscr: curses.window, colors: list[int]):
         self.stdscr = stdscr
         self.colors = colors
-        self.grid = np.fromfunction(np.vectorize(lambda i, j: Game.get_random_symbol()), [10] * 2)
+        self.grid: np.ndarray = np.fromfunction(np.vectorize(lambda i, j: Game.get_random_symbol()), [10] * 2)
         # self.grid = [[self.get_random_symbol() for _ in range(Game.grid_size)] for _ in range(Game.grid_size)]
 
     @staticmethod
-    def get_random_symbol():
+    def get_random_symbol() -> str:
         index = random.randrange(len(Game.symbols))
         return Game.symbols[index]
 
-    def play(self):
+    def play(self) -> None:
         self.refresh_grid()
 
         while True:
@@ -42,8 +43,8 @@ class Game:
 
             self.refresh_grid()
 
-    def select_points_to_swap(self):
-        def generate_hint(selected_position, selected_position_index):
+    def select_points_to_swap(self) -> tuple[np.array, np.array]:
+        def generate_hint(selected_position, selected_position_index) -> str:
             return (
                 f"Select two symbols to swap...\n"
                 f"Selecting symbol #{selected_position_index + 1}\n"
@@ -51,7 +52,7 @@ class Game:
                 f"{self.grid[selected_position[0], selected_position[1]]} {selected_position}"
             )
 
-        def get_available_neighbor(selected_position1):
+        def get_available_neighbor(selected_position1: np.ndarray) -> np.ndarray:
             if selected_position1[0] == 0:
                 if selected_position1[1] == 0:
                     return selected_position1 + np.array([0, 1])
@@ -113,7 +114,7 @@ class Game:
 
         return selected_position1, selected_position2
 
-    def draw(self, hint, selected_positions=None):
+    def draw(self, hint: str, selected_positions: Optional[list[np.ndarray]] = None) -> None:
         self.stdscr.clear()
 
         for (i, j), symbol in np.ndenumerate(self.grid):
@@ -134,7 +135,7 @@ class Game:
         if hint is not None:
             self.stdscr.addstr(self.grid.shape[1] + 2, 0, hint)
 
-    def refresh_grid(self):
+    def refresh_grid(self) -> None:
         self.stdscr.timeout(100)
         skip_hint = "Press any key to skip..."
         self.draw(skip_hint)
@@ -176,7 +177,7 @@ class Game:
         # Remove timeout - make input blocking without a timeout
         self.stdscr.timeout(-1)
 
-    def find_matches_in_direction(self, direction, match_length):
+    def find_matches_in_direction(self, direction: np.ndarray, match_length: int) -> np.ndarray:
         slice_top_left_indices = np.stack([
             np.arange(match_length) if direction[0] != 0 else np.zeros(match_length, int),
             np.arange(match_length) if direction[1] != 0 else np.zeros(match_length, int)
@@ -201,7 +202,7 @@ class Game:
 
         return x
 
-    def find_match(self, match_length=3):
+    def find_match(self, match_length: int = 3) -> Optional[tuple[np.ndarray, np.ndarray]]:
         directions = np.array([
             (1, 0),
             (0, 1),
@@ -214,7 +215,7 @@ class Game:
                 return match, direction
         return None
 
-    def find_cluster(self, point):
+    def find_cluster(self, point: np.ndarray) -> np.ndarray:
         fringe = set()
         visited = set()
         current_point = point
@@ -243,7 +244,7 @@ class Game:
 
         return np.array(list(visited))
 
-    def find_same_symbol_neighbors(self, point):
+    def find_same_symbol_neighbors(self, point: np.ndarray) -> np.ndarray:
         # self.stdscr.clear()
         # self.stdscr.addstr(11, 0, str(point))
         same_symbol_neighbours = np.stack([
@@ -260,14 +261,14 @@ class Game:
         # self.stdscr.addstr(12, 0, str(same_symbol_neighbours))
         return same_symbol_neighbours
 
-    def is_point_inside_grid(self, point):
+    def is_point_inside_grid(self, point: np.ndarray) -> bool:
         return (point >= np.zeros(2)).all() and (point < np.array(self.grid.shape)).all()
 
-    def find_empty_points(self):
+    def find_empty_points(self) -> np.ndarray:
         # Return indices of elements that are the empty symbol
         return np.argwhere(self.grid == Game.empty_symbol)
 
-    def shift(self, empty_points):
+    def shift(self, empty_points: np.ndarray) -> None:
         # For each column that contains (one or more) empty points
         for j in np.unique(empty_points[:, 1]):
             # Find lowest point in that column
@@ -280,12 +281,12 @@ class Game:
             # Fill empty point at top with a random symbol
             self.grid[0, j] = Game.get_random_symbol()
 
-    def swap(self, selected_point1, selected_point2):
+    def swap(self, selected_point1: np.ndarray, selected_point2: np.ndarray) -> None:
         self.grid[selected_point1[0], selected_point1[1]], self.grid[selected_point2[0], selected_point2[1]] = \
             self.grid[selected_point2[0], selected_point2[1]], self.grid[selected_point1[0], selected_point1[1]]
 
 
-def main(stdscr):
+def main(stdscr: curses.window):
     random.seed(1234)  # For debugging
 
     # Initialise colours
