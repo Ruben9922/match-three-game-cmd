@@ -6,12 +6,13 @@ import (
 	"log"
 	"math/rand"
 	"os"
+	"sort"
 	"time"
 )
 
 const gridHeight int = 10
 const gridWidth int = 10
-const matchLength int = 3
+const minMatchLength int = 3
 
 var symbols = []rune{'A', 'B', 'C', 'D', 'E', 'F'}
 var symbolColors = map[rune]tcell.Style{
@@ -167,6 +168,12 @@ func refreshGrid(s tcell.Screen, g *grid) {
 		draw(s, *g, []vector2d{}, skipHint)
 
 		// Shift symbols down and insert random symbol at top of column
+		sort.Slice(points, func(i, j int) bool {
+			if points[i].y == points[j].y {
+				return points[i].x < points[j].x
+			}
+			return points[i].y < points[j].y
+		})
 		for _, p := range points {
 			for y := p.y; y > 0; y-- {
 				g[y][p.x] = g[y-1][p.x]
@@ -200,8 +207,8 @@ func refreshGrid(s tcell.Screen, g *grid) {
 }
 
 func convertMatchToPoints(m match) []vector2d {
-	points := make([]vector2d, 0, matchLength)
-	for i := 0; i < matchLength; i++ {
+	points := make([]vector2d, 0, m.length)
+	for i := 0; i < m.length; i++ {
 		point := vector2d{
 			x: m.position.x + (i * m.direction.x),
 			y: m.position.y + (i * m.direction.y),
@@ -372,29 +379,60 @@ func max(x, y int) int {
 type match struct {
 	position  vector2d
 	direction vector2d
+	length    int
 }
 
-var emptyMatch = newMatch(vector2d{x: -1, y: -1}, vector2d{})
+var emptyMatch = newMatch(vector2d{x: -1, y: -1}, vector2d{}, 0)
 
-func newMatch(position, direction vector2d) match {
+func newMatch(position, direction vector2d, length int) match {
 	return match{
 		position:  position,
 		direction: direction,
+		length:    length,
 	}
 }
 
+func isPointInsideGrid(p vector2d) bool {
+	return p.x >= 0 && p.x < gridWidth && p.y >= 0 && p.y < gridHeight
+}
+
 func findMatch(g grid) match {
-	directions := []vector2d{{x: 1, y: 0}, {x: 0, y: 1}, {x: 1, y: 1}}
+	directions := []vector2d{
+		{x: 1, y: 0},
+		{x: 0, y: 1},
+	}
 	for _, d := range directions {
-		offset := vector2d{x: max((d.x*matchLength)-1, 0), y: max((d.y*matchLength)-1, 0)}
-		for i := 0; i < gridHeight-offset.y; i++ {
+		offset := vector2d{
+			x: max((d.x*minMatchLength)-1, 0),
+			y: max((d.y*minMatchLength)-1, 0),
+		}
+
+		d.y = -d.y
+
+		for i := gridHeight - 1; i >= offset.y; i-- {
 			for j := 0; j < gridWidth-offset.x; j++ {
-				isMatch := true
-				for k := 0; k < matchLength && isMatch; k++ {
-					isMatch = g[i][j] == g[i+(k*d.y)][j+(k*d.x)]
+				matchLength := 0
+				originPoint := vector2d{x: j, y: i}
+				for {
+					currentPoint := vector2d{
+						x: j + (matchLength * d.x),
+						y: i + (matchLength * d.y),
+					}
+
+					if !isPointInsideGrid(currentPoint) {
+						break
+					}
+
+					isSameSymbol := g[originPoint.y][originPoint.x] == g[currentPoint.y][currentPoint.x]
+					if !isSameSymbol {
+						break
+					}
+
+					matchLength++
 				}
-				if isMatch {
-					return newMatch(vector2d{x: j, y: i}, d)
+
+				if matchLength >= minMatchLength {
+					return newMatch(originPoint, d, matchLength)
 				}
 			}
 		}
