@@ -254,7 +254,7 @@ func selectFirstPoint(s tcell.Screen, g grid) vector2d {
 
 	generateText := func() string {
 		return fmt.Sprintf(
-			"Select two points to swap (selecting point 2)...\n"+
+			"Select two points to swap (selecting point 1)...\n"+
 				"Press arrow keys (← ↑ → ↓) to move selection; press enter to continue\n\n"+
 				"Current selection: %c (%d, %d)",
 			g[point1.y][point1.x], point1.x, point1.y)
