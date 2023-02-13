@@ -401,6 +401,7 @@ func findMatch(g grid) match {
 		{x: 1, y: 0},
 		{x: 0, y: 1},
 	}
+	matches := make([]match, 0, 10)
 	for _, d := range directions {
 		offset := vector2d{
 			x: max((d.x*minMatchLength)-1, 0),
@@ -432,12 +433,22 @@ func findMatch(g grid) match {
 				}
 
 				if matchLength >= minMatchLength {
-					return newMatch(originPoint, d, matchLength)
+					matches = append(matches, newMatch(originPoint, d, matchLength))
 				}
 			}
 		}
 	}
-	return emptyMatch
+
+	if len(matches) == 0 {
+		return emptyMatch
+	}
+
+	// Return longest match
+	// Not sure if there's a better / more idiomatic way to do this
+	sort.Slice(matches, func(i, j int) bool {
+		return matches[i].length > matches[j].length
+	})
+	return matches[0]
 }
 
 func drawText(s tcell.Screen, x1, y1, x2, y2 int, style tcell.Style, text string) {
