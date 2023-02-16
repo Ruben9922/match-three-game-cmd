@@ -8,6 +8,7 @@ import (
 	"os"
 	"sort"
 	"time"
+	"unicode"
 )
 
 const gridHeight int = 10
@@ -74,12 +75,22 @@ func main() {
 	// Initialise game
 	g := newGrid()
 
-	draw(s, g, []vector2d{}, "")
-
 	refreshGrid(s, &g)
 
 	for {
-		swapPoints(s, &g)
+		// todo: use nil everywhere instead of empty slice
+		potentialMatch := make([]vector2d, 0)
+		for len(potentialMatch) == 0 {
+			// Check if there are any possible matches; if no possible matches then create a new grid
+			potentialMatch = findPotentialMatch(g)
+			if len(potentialMatch) == 0 {
+				g := newGrid()
+				refreshGrid(s, &g)
+			}
+		}
+
+		// todo: fix initial extra key press
+		swapPoints(s, &g, potentialMatch)
 
 		refreshGrid(s, &g)
 	}
@@ -218,8 +229,8 @@ func convertMatchToPoints(m match) []vector2d {
 	return points
 }
 
-func swapPoints(s tcell.Screen, g *grid) {
-	point1 := selectFirstPoint(s, *g)
+func swapPoints(s tcell.Screen, g *grid, potentialMatch []vector2d) {
+	point1 := selectFirstPoint(s, *g, potentialMatch)
 	point2 := selectSecondPoint(s, *g, point1)
 
 	gUpdated := *g
@@ -248,44 +259,58 @@ func swapPoints(s tcell.Screen, g *grid) {
 	}
 }
 
-func selectFirstPoint(s tcell.Screen, g grid) vector2d {
+func selectFirstPoint(s tcell.Screen, g grid, potentialMatch []vector2d) vector2d {
 	// Initialise point 1 to centre of grid
 	point1 := vector2d{x: gridWidth / 2, y: gridHeight / 2}
 
 	generateText := func() string {
 		return fmt.Sprintf(
 			"Select two points to swap (selecting point 1)...\n"+
-				"Press arrow keys (← ↑ → ↓) to move selection; press enter to continue\n\n"+
+				"Press arrow keys (← ↑ → ↓) to move selection; press enter to continue; press H to toggle hint\n\n"+
 				"Current selection: %c (%d, %d)",
 			g[point1.y][point1.x], point1.x, point1.y)
 	}
 
 	draw(s, g, []vector2d{point1}, generateText())
 	selected := false
+	showPotentialMatch := false
 	for !selected {
 		ev := s.PollEvent()
 		switch ev := ev.(type) {
 		//case *tcell.EventResize:
 		//	s.Sync()
 		case *tcell.EventKey:
-			switch ev.Key() {
-			case tcell.KeyUp:
-				point1.y--
-			case tcell.KeyDown:
-				point1.y++
-			case tcell.KeyLeft:
-				point1.x--
-			case tcell.KeyRight:
-				point1.x++
-			case tcell.KeyEnter:
-				selected = true
+			if showPotentialMatch {
+				showPotentialMatch = false
+			} else {
+				switch ev.Key() {
+				case tcell.KeyUp:
+					point1.y--
+				case tcell.KeyDown:
+					point1.y++
+				case tcell.KeyLeft:
+					point1.x--
+				case tcell.KeyRight:
+					point1.x++
+				case tcell.KeyEnter:
+					selected = true
+				}
+
+				point1.x = (point1.x + gridWidth) % gridWidth
+				point1.y = (point1.y + gridHeight) % gridHeight
+
+				if unicode.ToLower(ev.Rune()) == 'h' {
+					// todo: score no points if hint shown (?)
+					showPotentialMatch = true
+				}
 			}
 		}
 
-		point1.x = (point1.x + gridWidth) % gridWidth
-		point1.y = (point1.y + gridHeight) % gridHeight
-
-		draw(s, g, []vector2d{point1}, generateText())
+		if showPotentialMatch {
+			draw(s, g, potentialMatch, generateText()+"\nShowing hint")
+		} else {
+			draw(s, g, []vector2d{point1}, generateText())
+		}
 	}
 
 	return point1
@@ -396,6 +421,12 @@ func isPointInsideGrid(p vector2d) bool {
 	return p.x >= 0 && p.x < gridWidth && p.y >= 0 && p.y < gridHeight
 }
 
+// Match algorithm works in a way that scores the player the most points
+// * Prefers longer matches (checks for all possible matches and chooses the longest one) - to score the player more points
+// * Prefers lower down matches - idea is that this would score the player more points as more pieces falling means potentially more "automatic" matches
+// * "Maximal munch" behaviour - matches will be as long as possible; matches can be longer than the minimum match length
+// TODO: If match lengths equal, then prefer matches lower in grid
+// TODO: Return slice of matches so multiple matches are removed in one go
 func findMatch(g grid) match {
 	directions := []vector2d{
 		{x: 1, y: 0},
@@ -449,6 +480,125 @@ func findMatch(g grid) match {
 		return matches[i].length > matches[j].length
 	})
 	return matches[0]
+}
+
+func generatePotentialMatchFilters() [][]vector2d {
+	filters := make([][]vector2d, 0, (minMatchLength*2)+2)
+	for i := 0; i < minMatchLength; i++ {
+		// Filters of the form:
+		// X   |  X  |   X
+		//  XX | X X | XX
+		filter := make([]vector2d, 0, 3)
+		for j := 0; j < minMatchLength; j++ {
+			if j == i {
+				filter = append(filter, vector2d{x: j, y: 0})
+			} else {
+				filter = append(filter, vector2d{x: j, y: 1})
+			}
+		}
+		filters = append(filters, filter)
+
+		// Filters of the form:
+		//  XX | X X | XX
+		// X   |  X  |   X
+		filter = make([]vector2d, 0, 3)
+		for j := 0; j < minMatchLength; j++ {
+			if j == i {
+				filter = append(filter, vector2d{x: j, y: 1})
+			} else {
+				filter = append(filter, vector2d{x: j, y: 0})
+			}
+		}
+		filters = append(filters, filter)
+	}
+
+	// Filter of the form:
+	// X XX
+	filter := make([]vector2d, 0, 3)
+	for j := 0; j < minMatchLength; j++ {
+		if j == 0 {
+			filter = append(filter, vector2d{x: 0, y: 0})
+		} else {
+			filter = append(filter, vector2d{x: j + 1, y: 0})
+		}
+	}
+	filters = append(filters, filter)
+
+	// Filter of the form:
+	// XX X
+	filter = make([]vector2d, 0, 3)
+	for j := 0; j < minMatchLength; j++ {
+		if j == minMatchLength-1 {
+			filter = append(filter, vector2d{x: minMatchLength, y: 0})
+		} else {
+			filter = append(filter, vector2d{x: j, y: 0})
+		}
+	}
+	filters = append(filters, filter)
+
+	// todo: add rotated versions of filters
+
+	return filters
+}
+
+func computeObjectSize(object []vector2d) vector2d {
+	xs := make([]int, 0, len(object))
+	for _, p := range object {
+		xs = append(xs, p.x)
+	}
+	sort.Ints(xs)
+
+	xMin := xs[0]
+	xMax := xs[len(xs)-1]
+	xSize := (xMax - xMin) + 1
+
+	ys := make([]int, 0, len(object))
+	for _, p := range object {
+		ys = append(ys, p.y)
+	}
+	sort.Ints(ys)
+
+	yMin := ys[0]
+	yMax := ys[len(ys)-1]
+	ySize := (yMax - yMin) + 1
+
+	return vector2d{x: xSize, y: ySize}
+}
+
+// May want to revise this to allow potential matches longer than minimum match length
+// Add text warning that it may not be the optimal match
+func findPotentialMatch(g grid) []vector2d {
+	filters := generatePotentialMatchFilters()
+
+	// todo put filters loop on inside
+	// todo go from bottom to top
+	for _, f := range filters {
+		filterSize := computeObjectSize(f)
+
+		for x := 0; x < gridWidth-filterSize.x+1; x++ {
+			for y := 0; y < gridHeight-filterSize.y+1; y++ {
+				sameSymbol := true
+				origin := vector2d{x: x, y: y}
+				reference := f[0]
+				referenceGridCoords := vector2d{x: origin.x + reference.x, y: origin.y + reference.y}
+				fGridCoords := make([]vector2d, 0, len(f))
+				for _, p := range f {
+					pGridCoords := vector2d{x: origin.x + p.x, y: origin.y + p.y}
+					if g[pGridCoords.y][pGridCoords.x] != g[referenceGridCoords.y][referenceGridCoords.x] {
+						sameSymbol = false
+						break
+					}
+
+					fGridCoords = append(fGridCoords, pGridCoords)
+				}
+				if sameSymbol {
+					return fGridCoords
+				}
+			}
+		}
+	}
+
+	return []vector2d{}
 }
 
 func drawText(s tcell.Screen, x1, y1, x2, y2 int, style tcell.Style, text string) {
