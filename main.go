@@ -391,41 +391,41 @@ func selectSecondPoint(s tcell.Screen, g grid, point1 vector2d) vector2d {
 
 	draw(s, g, []vector2d{point1, point2}, generateText())
 	selected := false
+	point2Updated := point2
 	for !selected {
 		ev := s.PollEvent()
 		switch ev := ev.(type) {
 		//case *tcell.EventResize:
 		//	s.Sync()
-		// TODO: Prevent selection from wrapping
 		case *tcell.EventKey:
 			if ev.Key() == tcell.KeyUp || ev.Rune() == 'W' {
 				//point2 = vector2d{
 				//	x: point1.x,
 				//	y: point1.y - 1,
 				//}
-				point2 = point1
-				point2.y--
+				point2Updated = point1
+				point2Updated.y--
 			} else if ev.Key() == tcell.KeyDown || ev.Rune() == 'S' {
 				//point2 = vector2d{
 				//	x: point1.x,
 				//	y: point1.y + 1,
 				//}
-				point2 = point1
-				point2.y++
+				point2Updated = point1
+				point2Updated.y++
 			} else if ev.Key() == tcell.KeyLeft || ev.Rune() == 'A' {
 				//point2 = vector2d{
 				//	x: point1.x - 1,
 				//	y: point1.y,
 				//}
-				point2 = point1
-				point2.x--
+				point2Updated = point1
+				point2Updated.x--
 			} else if ev.Key() == tcell.KeyRight || ev.Rune() == 'D' {
 				//point2 = vector2d{
 				//	x: point1.x + 1,
 				//	y: point1.y,
 				//}
-				point2 = point1
-				point2.x++
+				point2Updated = point1
+				point2Updated.x++
 			} else if ev.Key() == tcell.KeyEnter {
 				selected = true
 			} else if ev.Key() == tcell.KeyEscape {
@@ -433,8 +433,9 @@ func selectSecondPoint(s tcell.Screen, g grid, point1 vector2d) vector2d {
 			}
 		}
 
-		point2.x = (point2.x + gridWidth) % gridWidth
-		point2.y = (point2.y + gridHeight) % gridHeight
+		if isPointInsideGrid(point2Updated) {
+			point2 = point2Updated
+		}
 
 		draw(s, g, []vector2d{point1, point2}, generateText())
 	}
