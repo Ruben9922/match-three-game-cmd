@@ -181,6 +181,9 @@ func refreshGrid(s tcell.Screen, g *grid) {
 
 		points := convertMatchesToPoints(matches)
 
+		// Shifting algorithm assumes points are unique; duplicate points will cause strange behaviour
+		points = removeDuplicatePoints(points)
+
 		// Set points in matches to empty
 		for _, p := range points {
 			g[p.y][p.x] = emptySymbol
@@ -190,17 +193,33 @@ func refreshGrid(s tcell.Screen, g *grid) {
 		draw(s, *g, []vector2d{}, skipHint)
 
 		// Shift symbols down and insert random symbol at top of column
+		// Instead of manually updating points list, could maybe just search through grid for empty points
+		// Assumes points are unique - duplicate points will cause strange behaviour
+		// Want to shift lower points first - hence sorting such that lower points (points with higher y) come first
 		sort.Slice(points, func(i, j int) bool {
-			if points[i].y == points[j].y {
-				return points[i].x < points[j].x
+			if points[i].x == points[j].x {
+				return points[i].y > points[j].y
 			}
-			return points[i].y < points[j].y
+			return points[i].x < points[j].x
 		})
-		for _, p := range points {
+		for len(points) > 0 {
+			p := points[0]
+			points = points[1:]
+
 			for y := p.y; y > 0; y-- {
 				g[y][p.x] = g[y-1][p.x]
 			}
 			g[0][p.x] = getRandomSymbol()
+
+			// Shift down remaining points in same column to account for shifting of corresponding empty points in grid
+			// p1.y++ for each point p1 in this column (with same x)
+			for i := 0; i < len(points); i++ {
+				p1 := &points[i]
+				// If point is in the same column and (strictly) above current point
+				if p1.x == p.x && p1.y < p.y {
+					p1.y++
+				}
+			}
 
 			waitForKeyPressOrTimeout()
 			draw(s, *g, []vector2d{}, skipHint)
@@ -241,6 +260,18 @@ func convertMatchesToPoints(matches []match) []vector2d {
 		}
 	}
 	return points
+}
+
+func removeDuplicatePoints(points []vector2d) []vector2d {
+	pointsMap := make(map[vector2d]bool, len(points))
+	updatedPoints := make([]vector2d, 0, len(points))
+	for _, p := range points {
+		if _, present := pointsMap[p]; !present {
+			pointsMap[p] = true
+			updatedPoints = append(updatedPoints, p)
+		}
+	}
+	return updatedPoints
 }
 
 func swapPoints(s tcell.Screen, g *grid, potentialMatch []vector2d) {
