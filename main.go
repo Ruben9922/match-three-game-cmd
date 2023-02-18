@@ -36,6 +36,8 @@ var symbolHighlightedColors = map[rune]tcell.Style{
 
 const emptySymbol rune = ' '
 
+var emptyVector2d = vector2d{x: -1, y: -1}
+
 type grid [gridHeight][gridWidth]rune
 
 func newGrid() (g grid) {
@@ -276,8 +278,12 @@ func removeDuplicatePoints(points []vector2d) []vector2d {
 }
 
 func swapPoints(s tcell.Screen, g *grid, potentialMatch []vector2d) {
-	point1 := selectFirstPoint(s, *g, potentialMatch)
-	point2 := selectSecondPoint(s, *g, point1)
+	point1 := vector2d{x: gridWidth / 2, y: gridHeight / 2} // Initialise point 1 to centre of grid
+	point2 := emptyVector2d
+	for point2 == emptyVector2d {
+		point1 = selectFirstPoint(s, *g, potentialMatch, point1)
+		point2 = selectSecondPoint(s, *g, point1)
+	}
 
 	gUpdated := *g
 	gUpdated[point1.y][point1.x], gUpdated[point2.y][point2.x] =
@@ -306,9 +312,8 @@ func swapPoints(s tcell.Screen, g *grid, potentialMatch []vector2d) {
 	}
 }
 
-func selectFirstPoint(s tcell.Screen, g grid, potentialMatch []vector2d) vector2d {
-	// Initialise point 1 to centre of grid
-	point1 := vector2d{x: gridWidth / 2, y: gridHeight / 2}
+func selectFirstPoint(s tcell.Screen, g grid, potentialMatch []vector2d, point1Initial vector2d) vector2d {
+	point1 := point1Initial
 
 	generateText := func() string {
 		return fmt.Sprintf(
@@ -391,6 +396,7 @@ func selectSecondPoint(s tcell.Screen, g grid, point1 vector2d) vector2d {
 		switch ev := ev.(type) {
 		//case *tcell.EventResize:
 		//	s.Sync()
+		// TODO: Prevent selection from wrapping
 		case *tcell.EventKey:
 			if ev.Key() == tcell.KeyUp || ev.Rune() == 'W' {
 				//point2 = vector2d{
@@ -422,6 +428,8 @@ func selectSecondPoint(s tcell.Screen, g grid, point1 vector2d) vector2d {
 				point2.x++
 			} else if ev.Key() == tcell.KeyEnter {
 				selected = true
+			} else if ev.Key() == tcell.KeyEscape {
+				return emptyVector2d
 			}
 		}
 
