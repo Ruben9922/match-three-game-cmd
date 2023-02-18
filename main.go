@@ -58,6 +58,7 @@ func newGrid() (g grid) {
 var defaultStyle = tcell.StyleDefault.Background(tcell.ColorDefault).Foreground(tcell.ColorDefault)
 
 func main() {
+	// TODO: Consider using something like bubbletea instead
 	s, err := tcell.NewScreen()
 	if err != nil {
 		log.Fatalf("%+v", err)
@@ -76,6 +77,16 @@ func main() {
 	g := newGrid()
 
 	refreshGrid(s, &g)
+
+	//fixme: for testing purposes only
+	//g[0][9] = 'A'
+
+	//g[1][9] = 'A'
+	//g[2][8] = 'A'
+	//g[3][9] = 'A'
+	//g[3][8] = 'A'
+	//g[3][7] = 'A'
+	//g[3][6] = 'A'
 
 	for {
 		// todo: use nil everywhere instead of empty slice
@@ -163,14 +174,14 @@ func refreshGrid(s tcell.Screen, g *grid) {
 	draw(s, *g, []vector2d{}, skipHint)
 
 	for {
-		m := findMatch(*g)
-		if m == emptyMatch {
+		matches := findMatches(*g)
+		if len(matches) == 0 {
 			break
 		}
 
-		points := convertMatchToPoints(m)
+		points := convertMatchesToPoints(matches)
 
-		// Set points in match to empty
+		// Set points in matches to empty
 		for _, p := range points {
 			g[p.y][p.x] = emptySymbol
 		}
@@ -217,14 +228,17 @@ func refreshGrid(s tcell.Screen, g *grid) {
 	//skipped <- true
 }
 
-func convertMatchToPoints(m match) []vector2d {
-	points := make([]vector2d, 0, m.length)
-	for i := 0; i < m.length; i++ {
-		point := vector2d{
-			x: m.position.x + (i * m.direction.x),
-			y: m.position.y + (i * m.direction.y),
+func convertMatchesToPoints(matches []match) []vector2d {
+	// Calculating actual capacity would require looping through `matches`, so just making a guess
+	points := make([]vector2d, 0, len(matches)*5)
+	for _, m := range matches {
+		for i := 0; i < m.length; i++ {
+			point := vector2d{
+				x: m.position.x + (i * m.direction.x),
+				y: m.position.y + (i * m.direction.y),
+			}
+			points = append(points, point)
 		}
-		points = append(points, point)
 	}
 	return points
 }
@@ -236,12 +250,12 @@ func swapPoints(s tcell.Screen, g *grid, potentialMatch []vector2d) {
 	gUpdated := *g
 	gUpdated[point1.y][point1.x], gUpdated[point2.y][point2.x] =
 		gUpdated[point2.y][point2.x], gUpdated[point1.y][point1.x]
-	m := findMatch(gUpdated)
-	if m != emptyMatch {
+	matches := findMatches(gUpdated)
+	if len(matches) != 0 {
 		*g = gUpdated
 		text := fmt.Sprintf("Swapped %c (%d, %d) and %c (%d, %d); match formed\nPress any key to continue",
 			g[point1.y][point1.x], point1.x, point1.y, g[point2.y][point2.x], point2.x, point2.y)
-		draw(s, *g, convertMatchToPoints(m), text)
+		draw(s, *g, convertMatchesToPoints(matches), text)
 	} else {
 		text := "Not swapping as swap would not result in a match; please try again\nPress any key to continue"
 		draw(s, *g, []vector2d{point1, point2}, text)
@@ -427,7 +441,7 @@ func isPointInsideGrid(p vector2d) bool {
 // * "Maximal munch" behaviour - matches will be as long as possible; matches can be longer than the minimum match length
 // TODO: If match lengths equal, then prefer matches lower in grid
 // TODO: Return slice of matches so multiple matches are removed in one go
-func findMatch(g grid) match {
+func findMatches(g grid) []match {
 	directions := []vector2d{
 		{x: 1, y: 0},
 		{x: 0, y: 1},
@@ -470,16 +484,7 @@ func findMatch(g grid) match {
 		}
 	}
 
-	if len(matches) == 0 {
-		return emptyMatch
-	}
-
-	// Return longest match
-	// Not sure if there's a better / more idiomatic way to do this
-	sort.Slice(matches, func(i, j int) bool {
-		return matches[i].length > matches[j].length
-	})
-	return matches[0]
+	return matches
 }
 
 func generatePotentialMatchFilters() [][]vector2d {
