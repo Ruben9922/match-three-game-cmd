@@ -483,6 +483,7 @@ func isPointInsideGrid(p vector2d) bool {
 // * "Maximal munch" behaviour - matches will be as long as possible; matches can be longer than the minimum match length
 // TODO: If match lengths equal, then prefer matches lower in grid
 // TODO: Return slice of matches so multiple matches are removed in one go
+// TODO: Somehow remove overlapping matches - noticed single match of 4 is counting as two matches
 func findMatches(g grid) []match {
 	directions := []vector2d{
 		{x: 1, y: 0},
@@ -530,7 +531,7 @@ func findMatches(g grid) []match {
 }
 
 func generatePotentialMatchFilters() [][]vector2d {
-	filters := make([][]vector2d, 0, (minMatchLength*2)+2)
+	horizontalFilters := make([][]vector2d, 0, (minMatchLength*2)+2)
 	for i := 0; i < minMatchLength; i++ {
 		// Filters of the form:
 		// X   |  X  |   X
@@ -543,7 +544,7 @@ func generatePotentialMatchFilters() [][]vector2d {
 				filter = append(filter, vector2d{x: j, y: 1})
 			}
 		}
-		filters = append(filters, filter)
+		horizontalFilters = append(horizontalFilters, filter)
 
 		// Filters of the form:
 		//  XX | X X | XX
@@ -556,7 +557,7 @@ func generatePotentialMatchFilters() [][]vector2d {
 				filter = append(filter, vector2d{x: j, y: 0})
 			}
 		}
-		filters = append(filters, filter)
+		horizontalFilters = append(horizontalFilters, filter)
 	}
 
 	// Filter of the form:
@@ -569,7 +570,7 @@ func generatePotentialMatchFilters() [][]vector2d {
 			filter = append(filter, vector2d{x: j + 1, y: 0})
 		}
 	}
-	filters = append(filters, filter)
+	horizontalFilters = append(horizontalFilters, filter)
 
 	// Filter of the form:
 	// XX X
@@ -581,11 +582,19 @@ func generatePotentialMatchFilters() [][]vector2d {
 			filter = append(filter, vector2d{x: j, y: 0})
 		}
 	}
-	filters = append(filters, filter)
+	horizontalFilters = append(horizontalFilters, filter)
 
-	// todo: add rotated versions of filters
+	verticalFilters := make([][]vector2d, 0, len(horizontalFilters))
+	// Copy horizontal filters but flip the x and y values
+	for _, f := range horizontalFilters {
+		fVertical := make([]vector2d, 0, len(f))
+		for _, p := range f {
+			fVertical = append(fVertical, vector2d{x: p.y, y: p.x})
+		}
+		verticalFilters = append(verticalFilters, fVertical)
+	}
 
-	return filters
+	return append(horizontalFilters, verticalFilters...)
 }
 
 func computeObjectSize(object []vector2d) vector2d {
