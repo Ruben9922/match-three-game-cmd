@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/dustin/go-humanize/english"
 	"github.com/gdamore/tcell"
 	"log"
 	"math/rand"
@@ -284,8 +285,9 @@ func swapPoints(s tcell.Screen, g *grid, potentialMatch []vector2d) {
 	matches := findMatches(gUpdated)
 	if len(matches) != 0 {
 		*g = gUpdated
-		text := fmt.Sprintf("Swapped %c (%d, %d) and %c (%d, %d); match formed\nPress any key to continue",
-			g[point1.y][point1.x], point1.x, point1.y, g[point2.y][point2.x], point2.x, point2.y)
+		text := fmt.Sprintf("Swapped %c (%d, %d) and %c (%d, %d); %s formed\nPress any key to continue",
+			g[point1.y][point1.x], point1.x, point1.y, g[point2.y][point2.x], point2.x, point2.y,
+			english.PluralWord(len(matches), "match", ""))
 		draw(s, *g, convertMatchesToPoints(matches), text)
 	} else {
 		text := "Not swapping as swap would not result in a match; please try again\nPress any key to continue"
