@@ -10,6 +10,7 @@ import (
 	"sort"
 	"time"
 	"unicode"
+	"unicode/utf8"
 )
 
 const gridHeight int = 10
@@ -135,17 +136,48 @@ func main() {
 	s.Clear()
 }
 
-func draw(s tcell.Screen, g grid, selectedPoints []vector2d, text string) {
+type control struct {
+	key         string
+	description string
+}
+
+func draw(s tcell.Screen, g grid, selectedPoints []vector2d, text string, controls []control) {
 	s.Clear()
 
 	// Draw grid
 	drawGrid(s, g, selectedPoints)
 
 	// Draw text
-	screenWidth, screenHeight := s.Size()
-	drawText(s, (gridWidth*2)+3, 0, screenWidth-1, screenHeight-1, defaultStyle, text)
+	screenWidth, _ := s.Size()
+	const textOffsetX = (gridWidth * 2) + 3
+	drawText(s, textOffsetX, 0, screenWidth-1, 5, defaultStyle, text)
+
+	// Draw controls
+	drawControls(s, controls, textOffsetX, 6)
 
 	s.Show()
+}
+
+func drawControls(s tcell.Screen, controls []control, offsetX int, offsetY int) {
+	screenWidth, screenHeight := s.Size()
+
+	// TODO: Maybe extract into separate function or use lo.MinBy
+	keyLengths := make([]int, 0, len(controls))
+	for _, c := range controls {
+		keyLengths = append(keyLengths, utf8.RuneCountInString(c.key))
+	}
+	sort.Ints(keyLengths)
+	maxKeyLength := keyLengths[len(keyLengths)-1]
+
+	drawText(s, offsetX, offsetY, screenWidth-1, offsetY+1, defaultStyle, "Controls:")
+	for i, c := range controls {
+		y1 := offsetY + i + 1
+		y2 := offsetY + i + 2
+		if y1 < screenHeight {
+			drawText(s, offsetX, y1, offsetX+maxKeyLength, y2, defaultStyle, c.key)
+			drawText(s, offsetX+maxKeyLength+2, y1, screenWidth-1, y2, defaultStyle, c.description)
+		}
+	}
 }
 
 func refreshGrid(s tcell.Screen, g *grid) {
@@ -173,8 +205,9 @@ func refreshGrid(s tcell.Screen, g *grid) {
 		}
 	}
 
-	const skipHint string = "Press any key to skip"
-	draw(s, *g, []vector2d{}, skipHint)
+	const text = "Refresh grid"
+	controls := []control{{key: "<Any key>", description: "Skip"}}
+	draw(s, *g, []vector2d{}, text, controls)
 
 	for {
 		matches := findMatches(*g)
@@ -193,7 +226,7 @@ func refreshGrid(s tcell.Screen, g *grid) {
 		}
 
 		waitForKeyPressOrTimeout()
-		draw(s, *g, []vector2d{}, skipHint)
+		draw(s, *g, []vector2d{}, text, controls)
 
 		// Shift symbols down and insert random symbol at top of column
 		// Instead of manually updating points list, could maybe just search through grid for empty points
@@ -225,7 +258,7 @@ func refreshGrid(s tcell.Screen, g *grid) {
 			}
 
 			waitForKeyPressOrTimeout()
-			draw(s, *g, []vector2d{}, skipHint)
+			draw(s, *g, []vector2d{}, text, controls)
 		}
 	}
 
@@ -289,15 +322,16 @@ func swapPoints(s tcell.Screen, g *grid, potentialMatch []vector2d) {
 	gUpdated[point1.y][point1.x], gUpdated[point2.y][point2.x] =
 		gUpdated[point2.y][point2.x], gUpdated[point1.y][point1.x]
 	matches := findMatches(gUpdated)
+	controls := []control{{key: "<Any key>", description: "Continue"}}
 	if len(matches) != 0 {
 		*g = gUpdated
-		text := fmt.Sprintf("Swapped %c (%d, %d) and %c (%d, %d); %s formed\nPress any key to continue",
+		text := fmt.Sprintf("Swapped %c (%d, %d) and %c (%d, %d); %s formed",
 			g[point1.y][point1.x], point1.x, point1.y, g[point2.y][point2.x], point2.x, point2.y,
 			english.PluralWord(len(matches), "match", ""))
-		draw(s, *g, convertMatchesToPoints(matches), text)
+		draw(s, *g, convertMatchesToPoints(matches), text, controls)
 	} else {
-		text := "Not swapping as swap would not result in a match; please try again\nPress any key to continue"
-		draw(s, *g, []vector2d{point1, point2}, text)
+		text := "Not swapping as swap would not result in a match; please try again"
+		draw(s, *g, []vector2d{point1, point2}, text, controls)
 	}
 
 	keyPressed := false
@@ -317,13 +351,19 @@ func selectFirstPoint(s tcell.Screen, g grid, potentialMatch []vector2d, point1I
 
 	generateText := func() string {
 		return fmt.Sprintf(
-			"Select two points to swap (selecting point 1)...\n"+
-				"Press arrow keys (← ↑ → ↓) to move selection; press enter to continue; press H to toggle hint\n\n"+
-				"Current selection: %c (%d, %d)",
+			"Select two points to swap (selecting point 1)...\n\nCurrent selection: %c (%d, %d)",
 			g[point1.y][point1.x], point1.x, point1.y)
 	}
+	controls := []control{
+		{key: "← ↑ → ↓", description: "Move selection"},
+		{key: "Enter", description: "Continue"},
+		{key: "H", description: "Show hint"},
+	}
+	hintControls := []control{
+		{key: "<Any key>", description: "Hide hint"},
+	}
 
-	draw(s, g, []vector2d{point1}, generateText())
+	draw(s, g, []vector2d{point1}, generateText(), controls)
 	selected := false
 	showPotentialMatch := false
 	for !selected {
@@ -359,9 +399,9 @@ func selectFirstPoint(s tcell.Screen, g grid, potentialMatch []vector2d, point1I
 		}
 
 		if showPotentialMatch {
-			draw(s, g, potentialMatch, generateText()+"\nShowing hint")
+			draw(s, g, potentialMatch, generateText()+"\nShowing hint", hintControls)
 		} else {
-			draw(s, g, []vector2d{point1}, generateText())
+			draw(s, g, []vector2d{point1}, generateText(), controls)
 		}
 	}
 
@@ -382,14 +422,17 @@ func selectSecondPoint(s tcell.Screen, g grid, point1 vector2d) vector2d {
 
 	generateText := func() string {
 		return fmt.Sprintf(
-			"Select two points to swap (selecting point 2)...\n"+
-				"Press arrow keys (← ↑ → ↓) to move selection; press enter to continue\n\n"+
+			"Select two points to swap (selecting point 2)...\n\n"+
 				"Point 1: %c (%d, %d)\n"+
 				"Current selection: %c (%d, %d)",
 			g[point1.y][point1.x], point1.x, point1.y, g[point2.y][point2.x], point2.x, point2.y)
 	}
+	controls := []control{
+		{key: "← ↑ → ↓", description: "Move selection"},
+		{key: "Enter", description: "Continue"},
+	}
 
-	draw(s, g, []vector2d{point1, point2}, generateText())
+	draw(s, g, []vector2d{point1, point2}, generateText(), controls)
 	selected := false
 	point2Updated := point2
 	for !selected {
@@ -437,7 +480,7 @@ func selectSecondPoint(s tcell.Screen, g grid, point1 vector2d) vector2d {
 			point2 = point2Updated
 		}
 
-		draw(s, g, []vector2d{point1, point2}, generateText())
+		draw(s, g, []vector2d{point1, point2}, generateText(), controls)
 	}
 
 	return point2
