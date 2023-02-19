@@ -626,20 +626,24 @@ func computeObjectSize(object []vector2d) vector2d {
 func findPotentialMatch(g grid) []vector2d {
 	filters := generatePotentialMatchFilters()
 
-	// todo put filters loop on inside
-	// todo go from bottom to top
-	for _, f := range filters {
-		filterSize := computeObjectSize(f)
+	for y := gridHeight - 1; y >= 0; y-- {
+		for x := 0; x < gridWidth; x++ {
+			for _, f := range filters {
+				// Don't need to compute size; could just check all filter's points are within grid
+				filterSize := computeObjectSize(f)
 
-		for x := 0; x < gridWidth-filterSize.x+1; x++ {
-			for y := 0; y < gridHeight-filterSize.y+1; y++ {
+				// Check filter would be inside the grid when positioned at current x,y coords
+				if x >= gridWidth-filterSize.x+1 || y < filterSize.y-1 {
+					continue
+				}
+
 				sameSymbol := true
 				origin := vector2d{x: x, y: y}
 				reference := f[0]
-				referenceGridCoords := vector2d{x: origin.x + reference.x, y: origin.y + reference.y}
+				referenceGridCoords := vector2d{x: origin.x + reference.x, y: origin.y - reference.y}
 				fGridCoords := make([]vector2d, 0, len(f))
 				for _, p := range f {
-					pGridCoords := vector2d{x: origin.x + p.x, y: origin.y + p.y}
+					pGridCoords := vector2d{x: origin.x + p.x, y: origin.y - p.y}
 					if g[pGridCoords.y][pGridCoords.x] != g[referenceGridCoords.y][referenceGridCoords.x] {
 						sameSymbol = false
 						break
