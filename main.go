@@ -205,7 +205,7 @@ func refreshGrid(s tcell.Screen, g *grid) {
 		}
 	}
 
-	const text = "Refresh grid"
+	const text = "Refreshing grid..."
 	controls := []control{{key: "<Any key>", description: "Skip"}}
 	draw(s, *g, []vector2d{}, text, controls)
 
@@ -356,7 +356,7 @@ func selectFirstPoint(s tcell.Screen, g grid, potentialMatch []vector2d, point1I
 	}
 	controls := []control{
 		{key: "← ↑ → ↓", description: "Move selection"},
-		{key: "Enter", description: "Continue"},
+		{key: "Enter", description: "Select"},
 		{key: "H", description: "Show hint"},
 	}
 	hintControls := []control{
@@ -429,7 +429,7 @@ func selectSecondPoint(s tcell.Screen, g grid, point1 vector2d) vector2d {
 	}
 	controls := []control{
 		{key: "← ↑ → ↓", description: "Move selection"},
-		{key: "Enter", description: "Continue"},
+		{key: "Enter", description: "Select"},
 	}
 
 	draw(s, g, []vector2d{point1, point2}, generateText(), controls)
