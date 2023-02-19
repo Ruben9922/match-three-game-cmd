@@ -430,6 +430,7 @@ func selectSecondPoint(s tcell.Screen, g grid, point1 vector2d) vector2d {
 	controls := []control{
 		{key: "← ↑ → ↓", description: "Move selection"},
 		{key: "Enter", description: "Select"},
+		{key: "Escape", description: "Cancel selection"},
 	}
 
 	draw(s, g, []vector2d{point1, point2}, generateText(), controls)
