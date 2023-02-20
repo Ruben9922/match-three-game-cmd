@@ -63,6 +63,12 @@ var defaultStyle = tcell.StyleDefault.Background(tcell.ColorDefault).Foreground(
 
 func main() {
 	// TODO: Consider using something like bubbletea instead
+	// TODO: Quit on Escape / "q" key
+	// TODO: Try using emojis instead of letters (maybe make this optional)
+	// TODO: Add different game modes - e.g. endless, timed, limited number of moves
+	// TODO: Add scoring
+	// TODO: Check resizing
+	// TODO: Reorder code, remove commented out code
 	s, err := tcell.NewScreen()
 	if err != nil {
 		log.Fatalf("%+v", err)
@@ -525,8 +531,6 @@ func isPointInsideGrid(p vector2d) bool {
 // * Prefers longer matches (checks for all possible matches and chooses the longest one) - to score the player more points
 // * Prefers lower down matches - idea is that this would score the player more points as more pieces falling means potentially more "automatic" matches
 // * "Maximal munch" behaviour - matches will be as long as possible; matches can be longer than the minimum match length
-// TODO: If match lengths equal, then prefer matches lower in grid
-// TODO: Return slice of matches so multiple matches are removed in one go
 // TODO: Somehow remove overlapping matches - noticed single match of 4 is counting as two matches
 func findMatches(g grid) []match {
 	directions := []vector2d{
