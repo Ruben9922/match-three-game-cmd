@@ -41,10 +41,10 @@ var emptyVector2d = vector2d{x: -1, y: -1}
 
 type grid [gridHeight][gridWidth]rune
 
-func newGrid() (g grid) {
+func newGrid(r *rand.Rand) (g grid) {
 	for i := 0; i < gridHeight; i++ {
 		for j := 0; j < gridWidth; j++ {
-			g[i][j] = getRandomSymbol()
+			g[i][j] = getRandomSymbol(r)
 		}
 	}
 	return
@@ -81,12 +81,12 @@ func main() {
 	s.SetStyle(defaultStyle)
 
 	// Initialise random number generator
-	rand.Seed(time.Now().UnixNano())
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 
 	// Initialise game
-	g := newGrid()
+	g := newGrid(r)
 
-	refreshGrid(s, &g)
+	refreshGrid(s, &g, r)
 
 	//fixme: for testing purposes only
 	//g[0][9] = 'A'
@@ -105,15 +105,15 @@ func main() {
 			// Check if there are any possible matches; if no possible matches then create a new grid
 			potentialMatch = findPotentialMatch(g)
 			if len(potentialMatch) == 0 {
-				g := newGrid()
-				refreshGrid(s, &g)
+				g := newGrid(r)
+				refreshGrid(s, &g, r)
 			}
 		}
 
 		// todo: fix initial extra key press
 		swapPoints(s, &g, potentialMatch)
 
-		refreshGrid(s, &g)
+		refreshGrid(s, &g, r)
 	}
 
 	quit := func() {
@@ -186,7 +186,7 @@ func drawControls(s tcell.Screen, controls []control, offsetX int, offsetY int) 
 	}
 }
 
-func refreshGrid(s tcell.Screen, g *grid) {
+func refreshGrid(s tcell.Screen, g *grid, r *rand.Rand) {
 	ticker := time.NewTicker(150 * time.Millisecond)
 	skipped := false
 	skippedChannel := make(chan bool)
@@ -251,7 +251,7 @@ func refreshGrid(s tcell.Screen, g *grid) {
 			for y := p.y; y > 0; y-- {
 				g[y][p.x] = g[y-1][p.x]
 			}
-			g[0][p.x] = getRandomSymbol()
+			g[0][p.x] = getRandomSymbol(r)
 
 			// Shift down remaining points in same column to account for shifting of corresponding empty points in grid
 			// p1.y++ for each point p1 in this column (with same x)
@@ -748,7 +748,7 @@ func drawGrid(s tcell.Screen, g grid, selectedPoints []vector2d) {
 	}
 }
 
-func getRandomSymbol() rune {
-	index := rand.Intn(len(symbols))
+func getRandomSymbol(r *rand.Rand) rune {
+	index := r.Intn(len(symbols))
 	return symbols[index]
 }
