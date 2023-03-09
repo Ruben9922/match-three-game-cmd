@@ -399,16 +399,15 @@ func selectFirstPoint(s tcell.Screen, g grid, potentialMatch []vector2d, point1I
 			if showPotentialMatch {
 				showPotentialMatch = false
 			} else {
-				switch ev.Key() {
-				case tcell.KeyUp:
+				if ev.Key() == tcell.KeyUp || unicode.ToLower(ev.Rune()) == 'w' {
 					point1.y--
-				case tcell.KeyDown:
+				} else if ev.Key() == tcell.KeyDown || unicode.ToLower(ev.Rune()) == 's' {
 					point1.y++
-				case tcell.KeyLeft:
+				} else if ev.Key() == tcell.KeyLeft || unicode.ToLower(ev.Rune()) == 'a' {
 					point1.x--
-				case tcell.KeyRight:
+				} else if ev.Key() == tcell.KeyRight || unicode.ToLower(ev.Rune()) == 'd' {
 					point1.x++
-				case tcell.KeyEnter:
+				} else if ev.Key() == tcell.KeyEnter {
 					selected = true
 				}
 
@@ -466,28 +465,28 @@ func selectSecondPoint(s tcell.Screen, g grid, point1 vector2d, score int) vecto
 		//case *tcell.EventResize:
 		//	s.Sync()
 		case *tcell.EventKey:
-			if ev.Key() == tcell.KeyUp || ev.Rune() == 'W' {
+			if ev.Key() == tcell.KeyUp || unicode.ToLower(ev.Rune()) == 'w' {
 				//point2 = vector2d{
 				//	x: point1.x,
 				//	y: point1.y - 1,
 				//}
 				point2Updated = point1
 				point2Updated.y--
-			} else if ev.Key() == tcell.KeyDown || ev.Rune() == 'S' {
+			} else if ev.Key() == tcell.KeyDown || unicode.ToLower(ev.Rune()) == 's' {
 				//point2 = vector2d{
 				//	x: point1.x,
 				//	y: point1.y + 1,
 				//}
 				point2Updated = point1
 				point2Updated.y++
-			} else if ev.Key() == tcell.KeyLeft || ev.Rune() == 'A' {
+			} else if ev.Key() == tcell.KeyLeft || unicode.ToLower(ev.Rune()) == 'a' {
 				//point2 = vector2d{
 				//	x: point1.x - 1,
 				//	y: point1.y,
 				//}
 				point2Updated = point1
 				point2Updated.x--
-			} else if ev.Key() == tcell.KeyRight || ev.Rune() == 'D' {
+			} else if ev.Key() == tcell.KeyRight || unicode.ToLower(ev.Rune()) == 'd' {
 				//point2 = vector2d{
 				//	x: point1.x + 1,
 				//	y: point1.y,
