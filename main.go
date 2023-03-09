@@ -379,7 +379,7 @@ func selectFirstPoint(s tcell.Screen, g grid, potentialMatch []vector2d, point1I
 			g[point1.y][point1.x], point1.x, point1.y)
 	}
 	controls := []control{
-		{key: "← ↑ → ↓", description: "Move selection"},
+		{key: "← ↑ → ↓ / WASD", description: "Move selection"},
 		{key: "Enter", description: "Select"},
 		{key: "H", description: "Show hint"},
 	}
@@ -451,7 +451,7 @@ func selectSecondPoint(s tcell.Screen, g grid, point1 vector2d, score int) vecto
 			g[point1.y][point1.x], point1.x, point1.y, g[point2.y][point2.x], point2.x, point2.y)
 	}
 	controls := []control{
-		{key: "← ↑ → ↓", description: "Move selection"},
+		{key: "← ↑ → ↓ / WASD", description: "Move selection"},
 		{key: "Enter", description: "Select"},
 		{key: "Escape", description: "Cancel selection"},
 	}
