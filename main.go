@@ -16,6 +16,7 @@ import (
 const gridHeight int = 10
 const gridWidth int = 10
 const minMatchLength int = 3
+const scorePerMatchedSymbol = 40
 
 var symbols = []rune{'A', 'B', 'C', 'D', 'E', 'F'}
 var symbolColors = map[rune]tcell.Style{
@@ -66,7 +67,6 @@ func main() {
 	// TODO: Quit on Escape / "q" key
 	// TODO: Try using emojis instead of letters (maybe make this optional)
 	// TODO: Add different game modes - e.g. endless, timed, limited number of moves
-	// TODO: Add scoring
 	// TODO: Check resizing
 	// TODO: Reorder code, remove commented out code
 	s, err := tcell.NewScreen()
@@ -85,8 +85,9 @@ func main() {
 
 	// Initialise game
 	g := newGrid(r)
+	score := 0
 
-	refreshGrid(s, &g, r)
+	refreshGrid(s, &g, r, &score, false)
 
 	//fixme: for testing purposes only
 	//g[0][9] = 'A'
@@ -106,14 +107,14 @@ func main() {
 			potentialMatch = findPotentialMatch(g)
 			if len(potentialMatch) == 0 {
 				g := newGrid(r)
-				refreshGrid(s, &g, r)
+				refreshGrid(s, &g, r, &score, false)
 			}
 		}
 
 		// todo: fix initial extra key press
-		swapPoints(s, &g, potentialMatch)
+		swapPoints(s, &g, potentialMatch, score)
 
-		refreshGrid(s, &g, r)
+		refreshGrid(s, &g, r, &score, true)
 	}
 
 	quit := func() {
@@ -147,19 +148,21 @@ type control struct {
 	description string
 }
 
-func draw(s tcell.Screen, g grid, selectedPoints []vector2d, text string, controls []control) {
+func draw(s tcell.Screen, g grid, selectedPoints []vector2d, text string, controls []control, score int) {
 	s.Clear()
 
 	// Draw grid
 	drawGrid(s, g, selectedPoints)
 
 	// Draw text
-	screenWidth, _ := s.Size()
+	screenWidth, screenHeight := s.Size()
 	const textOffsetX = (gridWidth * 2) + 3
 	drawText(s, textOffsetX, 0, screenWidth-1, 5, defaultStyle, text)
 
 	// Draw controls
 	drawControls(s, controls, textOffsetX, 6)
+
+	drawText(s, 0, gridHeight+1, screenWidth-1, screenHeight-1, defaultStyle, fmt.Sprintf("Score: %d", score))
 
 	s.Show()
 }
@@ -186,7 +189,17 @@ func drawControls(s tcell.Screen, controls []control, offsetX int, offsetY int) 
 	}
 }
 
-func refreshGrid(s tcell.Screen, g *grid, r *rand.Rand) {
+func computeScore(matches []match) int {
+	totalSymbolCount := 0
+	for _, m := range matches {
+		totalSymbolCount += m.length
+	}
+	score := totalSymbolCount * scorePerMatchedSymbol
+	return score
+}
+
+// todo: do initial refresh without animation and scoring
+func refreshGrid(s tcell.Screen, g *grid, r *rand.Rand, score *int, isScoring bool) {
 	ticker := time.NewTicker(150 * time.Millisecond)
 	skipped := false
 	skippedChannel := make(chan bool)
@@ -213,12 +226,17 @@ func refreshGrid(s tcell.Screen, g *grid, r *rand.Rand) {
 
 	const text = "Refreshing grid..."
 	controls := []control{{key: "<Any key>", description: "Skip"}}
-	draw(s, *g, []vector2d{}, text, controls)
+	draw(s, *g, []vector2d{}, text, controls, *score)
 
 	for {
 		matches := findMatches(*g)
 		if len(matches) == 0 {
 			break
+		}
+
+		if isScoring {
+			matchesScore := computeScore(matches)
+			*score += matchesScore
 		}
 
 		points := convertMatchesToPoints(matches)
@@ -232,7 +250,7 @@ func refreshGrid(s tcell.Screen, g *grid, r *rand.Rand) {
 		}
 
 		waitForKeyPressOrTimeout()
-		draw(s, *g, []vector2d{}, text, controls)
+		draw(s, *g, []vector2d{}, text, controls, *score)
 
 		// Shift symbols down and insert random symbol at top of column
 		// Instead of manually updating points list, could maybe just search through grid for empty points
@@ -264,7 +282,7 @@ func refreshGrid(s tcell.Screen, g *grid, r *rand.Rand) {
 			}
 
 			waitForKeyPressOrTimeout()
-			draw(s, *g, []vector2d{}, text, controls)
+			draw(s, *g, []vector2d{}, text, controls, *score)
 		}
 	}
 
@@ -316,12 +334,12 @@ func removeDuplicatePoints(points []vector2d) []vector2d {
 	return updatedPoints
 }
 
-func swapPoints(s tcell.Screen, g *grid, potentialMatch []vector2d) {
+func swapPoints(s tcell.Screen, g *grid, potentialMatch []vector2d, score int) {
 	point1 := vector2d{x: gridWidth / 2, y: gridHeight / 2} // Initialise point 1 to centre of grid
 	point2 := emptyVector2d
 	for point2 == emptyVector2d {
-		point1 = selectFirstPoint(s, *g, potentialMatch, point1)
-		point2 = selectSecondPoint(s, *g, point1)
+		point1 = selectFirstPoint(s, *g, potentialMatch, point1, score)
+		point2 = selectSecondPoint(s, *g, point1, score)
 	}
 
 	gUpdated := *g
@@ -334,10 +352,10 @@ func swapPoints(s tcell.Screen, g *grid, potentialMatch []vector2d) {
 		text := fmt.Sprintf("Swapped %c (%d, %d) and %c (%d, %d); %s formed",
 			g[point1.y][point1.x], point1.x, point1.y, g[point2.y][point2.x], point2.x, point2.y,
 			english.PluralWord(len(matches), "match", ""))
-		draw(s, *g, convertMatchesToPoints(matches), text, controls)
+		draw(s, *g, convertMatchesToPoints(matches), text, controls, score)
 	} else {
 		text := "Not swapping as swap would not result in a match; please try again"
-		draw(s, *g, []vector2d{point1, point2}, text, controls)
+		draw(s, *g, []vector2d{point1, point2}, text, controls, score)
 	}
 
 	keyPressed := false
@@ -352,7 +370,7 @@ func swapPoints(s tcell.Screen, g *grid, potentialMatch []vector2d) {
 	}
 }
 
-func selectFirstPoint(s tcell.Screen, g grid, potentialMatch []vector2d, point1Initial vector2d) vector2d {
+func selectFirstPoint(s tcell.Screen, g grid, potentialMatch []vector2d, point1Initial vector2d, score int) vector2d {
 	point1 := point1Initial
 
 	generateText := func() string {
@@ -369,7 +387,7 @@ func selectFirstPoint(s tcell.Screen, g grid, potentialMatch []vector2d, point1I
 		{key: "<Any key>", description: "Hide hint"},
 	}
 
-	draw(s, g, []vector2d{point1}, generateText(), controls)
+	draw(s, g, []vector2d{point1}, generateText(), controls, score)
 	selected := false
 	showPotentialMatch := false
 	for !selected {
@@ -405,16 +423,16 @@ func selectFirstPoint(s tcell.Screen, g grid, potentialMatch []vector2d, point1I
 		}
 
 		if showPotentialMatch {
-			draw(s, g, potentialMatch, generateText()+"\nShowing hint", hintControls)
+			draw(s, g, potentialMatch, generateText()+"\nShowing hint", hintControls, score)
 		} else {
-			draw(s, g, []vector2d{point1}, generateText(), controls)
+			draw(s, g, []vector2d{point1}, generateText(), controls, score)
 		}
 	}
 
 	return point1
 }
 
-func selectSecondPoint(s tcell.Screen, g grid, point1 vector2d) vector2d {
+func selectSecondPoint(s tcell.Screen, g grid, point1 vector2d, score int) vector2d {
 	point2 := point1
 	if point1.y == 0 {
 		if point1.x == gridWidth-1 {
@@ -439,7 +457,7 @@ func selectSecondPoint(s tcell.Screen, g grid, point1 vector2d) vector2d {
 		{key: "Escape", description: "Cancel selection"},
 	}
 
-	draw(s, g, []vector2d{point1, point2}, generateText(), controls)
+	draw(s, g, []vector2d{point1, point2}, generateText(), controls, score)
 	selected := false
 	point2Updated := point2
 	for !selected {
@@ -487,7 +505,7 @@ func selectSecondPoint(s tcell.Screen, g grid, point1 vector2d) vector2d {
 			point2 = point2Updated
 		}
 
-		draw(s, g, []vector2d{point1, point2}, generateText(), controls)
+		draw(s, g, []vector2d{point1, point2}, generateText(), controls, score)
 	}
 
 	return point2
