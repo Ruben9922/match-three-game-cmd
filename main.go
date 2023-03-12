@@ -107,7 +107,7 @@ func main() {
 			// Check if there are any possible matches; if no possible matches then create a new grid
 			potentialMatch = findPotentialMatch(g)
 			if len(potentialMatch) == 0 {
-				g := newGrid(r)
+				g = newGrid(r)
 				refreshGrid(s, &g, r, &score, false)
 			}
 		}
