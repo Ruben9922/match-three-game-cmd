@@ -360,6 +360,10 @@ func swapPoints(s tcell.Screen, g *grid, potentialMatch []vector2d, score int) {
 		draw(s, *g, []vector2d{point1, point2}, text, controls, score)
 	}
 
+	waitForKeyPress(s)
+}
+
+func waitForKeyPress(s tcell.Screen) {
 	keyPressed := false
 	for !keyPressed {
 		ev := s.PollEvent()
