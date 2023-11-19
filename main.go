@@ -52,15 +52,6 @@ func newGrid(r *rand.Rand) (g grid) {
 	return
 }
 
-// no longer needed
-//func (g grid) String() string {
-//	var rowStrings [gridHeight]string
-//	for i, row := range g {
-//		rowStrings[i] = strings.Join(row, " ")
-//	}
-//	return strings.Join(rowStrings[:], "\n")
-//}
-
 var defaultStyle = tcell.StyleDefault.Background(tcell.ColorDefault).Foreground(tcell.ColorDefault)
 
 func main() {
@@ -69,7 +60,7 @@ func main() {
 	// TODO: Try using emojis instead of letters (maybe make this optional)
 	// TODO: Add different game modes - e.g. endless, timed, limited number of moves
 	// TODO: Check resizing
-	// TODO: Reorder code, remove commented out code
+	// TODO: Reorder code
 	s, err := tcell.NewScreen()
 	if err != nil {
 		log.Fatalf("%+v", err)
@@ -89,16 +80,6 @@ func main() {
 	score := 0
 
 	refreshGrid(s, &g, r, &score, false)
-
-	//fixme: for testing purposes only
-	//g[0][9] = 'A'
-
-	//g[1][9] = 'A'
-	//g[2][8] = 'A'
-	//g[3][9] = 'A'
-	//g[3][8] = 'A'
-	//g[3][7] = 'A'
-	//g[3][6] = 'A'
 
 	for {
 		// todo: use nil everywhere instead of empty slice
@@ -287,26 +268,6 @@ func refreshGrid(s tcell.Screen, g *grid, r *rand.Rand, score *int, isScoring bo
 			draw(s, *g, []vector2d{}, text, controls, *score)
 		}
 	}
-
-	//ticker := time.NewTicker(500 * time.Millisecond)
-	//skipped := make(chan bool)
-	//
-	//go func() {
-	//	for {
-	//		select {
-	//		case <-skipped:
-	//			return
-	//		case <-ticker.C:
-	//			grid := newGrid()
-	//			drawGrid(s, grid)
-	//			s.Show()
-	//		}
-	//
-	//	}
-	//}()
-	//
-	//ticker.Stop()
-	//skipped <- true
 }
 
 func convertMatchesToPoints(matches []match) []vector2d {
@@ -368,8 +329,6 @@ func waitForKeyPress(s tcell.Screen) {
 	for !keyPressed {
 		ev := s.PollEvent()
 		switch ev.(type) {
-		//case *tcell.EventResize:
-		//	s.Sync()
 		case *tcell.EventKey:
 			keyPressed = true
 		}
@@ -399,8 +358,6 @@ func selectFirstPoint(s tcell.Screen, g grid, potentialMatch []vector2d, point1I
 	for !selected {
 		ev := s.PollEvent()
 		switch ev := ev.(type) {
-		//case *tcell.EventResize:
-		//	s.Sync()
 		case *tcell.EventKey:
 			if showPotentialMatch {
 				showPotentialMatch = false
@@ -468,37 +425,27 @@ func selectSecondPoint(s tcell.Screen, g grid, point1 vector2d, score int) vecto
 	for !selected {
 		ev := s.PollEvent()
 		switch ev := ev.(type) {
-		//case *tcell.EventResize:
-		//	s.Sync()
 		case *tcell.EventKey:
 			if ev.Key() == tcell.KeyUp || unicode.ToLower(ev.Rune()) == 'w' {
-				//point2 = vector2d{
-				//	x: point1.x,
-				//	y: point1.y - 1,
-				//}
-				point2Updated = point1
-				point2Updated.y--
+				point2 = vector2d{
+					x: point1.x,
+					y: point1.y - 1,
+				}
 			} else if ev.Key() == tcell.KeyDown || unicode.ToLower(ev.Rune()) == 's' {
-				//point2 = vector2d{
-				//	x: point1.x,
-				//	y: point1.y + 1,
-				//}
-				point2Updated = point1
-				point2Updated.y++
+				point2 = vector2d{
+					x: point1.x,
+					y: point1.y + 1,
+				}
 			} else if ev.Key() == tcell.KeyLeft || unicode.ToLower(ev.Rune()) == 'a' {
-				//point2 = vector2d{
-				//	x: point1.x - 1,
-				//	y: point1.y,
-				//}
-				point2Updated = point1
-				point2Updated.x--
+				point2 = vector2d{
+					x: point1.x - 1,
+					y: point1.y,
+				}
 			} else if ev.Key() == tcell.KeyRight || unicode.ToLower(ev.Rune()) == 'd' {
-				//point2 = vector2d{
-				//	x: point1.x + 1,
-				//	y: point1.y,
-				//}
-				point2Updated = point1
-				point2Updated.x++
+				point2 = vector2d{
+					x: point1.x + 1,
+					y: point1.y,
+				}
 			} else if ev.Key() == tcell.KeyEnter {
 				selected = true
 			} else if ev.Key() == tcell.KeyEscape {
@@ -520,8 +467,6 @@ type vector2d struct {
 	x, y int
 }
 
-//var emptyVector2d = vector2d{x: -1, y: -1}
-
 func max(x, y int) int {
 	if x > y {
 		return x
@@ -535,8 +480,6 @@ type match struct {
 	direction vector2d
 	length    int
 }
-
-var emptyMatch = newMatch(vector2d{x: -1, y: -1}, vector2d{}, 0)
 
 func newMatch(position, direction vector2d, length int) match {
 	return match{
