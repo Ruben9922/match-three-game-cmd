@@ -5,8 +5,25 @@ import (
 	"github.com/dustin/go-humanize"
 	"github.com/gdamore/tcell"
 	"sort"
+	"strings"
 	"unicode/utf8"
 )
+
+func drawTitleScreen(s tcell.Screen) {
+	s.Clear()
+
+	screenWidth, screenHeight := s.Size()
+
+	const titlePart1 = "  __  __       _       _       _____ _                   \n |  \\/  | __ _| |_ ___| |__   |_   _| |__  _ __ ___  ___ \n | |\\/| |/ _` | __/ __| '_ \\    | | | '_ \\| '__/ _ \\/ _ \\\n | |  | | (_| | || (__| | | |   | | | | | | | |  __/  __/\n |_|  |_|\\__,_|\\__\\___|_| |_|   |_| |_| |_|_|  \\___|\\___|"
+	const titlePart2 = "   ____                      \n  / ___| __ _ _ __ ___   ___ \n | |  _ / _` | '_ ` _ \\ / _ \\\n | |_| | (_| | | | | | |  __/\n  \\____|\\__,_|_| |_| |_|\\___|"
+	const text = "\n Press any key to start..."
+
+	drawText(s, 0, 0, screenWidth-1, screenHeight-1, defaultStyle, strings.Join([]string{
+		titlePart1,
+		titlePart2,
+		text,
+	}, "\n"))
+}
 
 func draw(s tcell.Screen, g grid, selectedPoints []vector2d, text string, controls []control, score int) {
 	s.Clear()

@@ -90,6 +90,10 @@ func main() {
 	// Set default text style
 	s.SetStyle(defaultStyle)
 
+	// Display title screen
+	drawTitleScreen(s)
+	waitForKeyPress(s)
+
 	// Initialise random number generator
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 

@@ -1,6 +1,9 @@
 package main
 
-import "math/rand"
+import (
+	"github.com/gdamore/tcell"
+	"math/rand"
+)
 
 func getRandomSymbol(r *rand.Rand) rune {
 	index := r.Intn(len(symbols))
@@ -16,4 +19,15 @@ func max(x, y int) int {
 		return x
 	}
 	return y
+}
+
+func waitForKeyPress(s tcell.Screen) {
+	keyPressed := false
+	for !keyPressed {
+		ev := s.PollEvent()
+		switch ev.(type) {
+		case *tcell.EventKey:
+			keyPressed = true
+		}
+	}
 }

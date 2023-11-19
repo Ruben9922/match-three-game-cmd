@@ -161,14 +161,3 @@ func selectSecondPoint(s tcell.Screen, g grid, point1 vector2d, score int) vecto
 
 	return point2
 }
-
-func waitForKeyPress(s tcell.Screen) {
-	keyPressed := false
-	for !keyPressed {
-		ev := s.PollEvent()
-		switch ev.(type) {
-		case *tcell.EventKey:
-			keyPressed = true
-		}
-	}
-}
