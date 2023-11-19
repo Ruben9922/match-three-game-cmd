@@ -14,10 +14,49 @@ import (
 	"unicode/utf8"
 )
 
+type grid [gridHeight][gridWidth]rune
+
+func newGrid(r *rand.Rand) (g grid) {
+	for i := 0; i < gridHeight; i++ {
+		for j := 0; j < gridWidth; j++ {
+			g[i][j] = getRandomSymbol(r)
+		}
+	}
+	return
+}
+
+type vector2d struct {
+	x, y int
+}
+
+var emptyVector2d = vector2d{x: -1, y: -1}
+
+// Maybe remove this and just use slice of points instead (?)
+type match struct {
+	position  vector2d
+	direction vector2d
+	length    int
+}
+
+func newMatch(position, direction vector2d, length int) match {
+	return match{
+		position:  position,
+		direction: direction,
+		length:    length,
+	}
+}
+
+type control struct {
+	key         string
+	description string
+}
+
 const gridHeight int = 10
 const gridWidth int = 10
 const minMatchLength int = 3
 const scorePerMatchedSymbol = 40
+
+const emptySymbol rune = ' '
 
 var symbols = []rune{'A', 'B', 'C', 'D', 'E', 'F'}
 var symbolColors = map[rune]tcell.Style{
@@ -35,21 +74,6 @@ var symbolHighlightedColors = map[rune]tcell.Style{
 	symbols[3]: tcell.StyleDefault.Background(tcell.ColorGreen).Foreground(tcell.ColorDefault),
 	symbols[4]: tcell.StyleDefault.Background(tcell.ColorRed).Foreground(tcell.ColorDefault),
 	symbols[5]: tcell.StyleDefault.Background(tcell.ColorYellow).Foreground(tcell.ColorDefault),
-}
-
-const emptySymbol rune = ' '
-
-var emptyVector2d = vector2d{x: -1, y: -1}
-
-type grid [gridHeight][gridWidth]rune
-
-func newGrid(r *rand.Rand) (g grid) {
-	for i := 0; i < gridHeight; i++ {
-		for j := 0; j < gridWidth; j++ {
-			g[i][j] = getRandomSymbol(r)
-		}
-	}
-	return
 }
 
 var defaultStyle = tcell.StyleDefault.Background(tcell.ColorDefault).Foreground(tcell.ColorDefault)
@@ -125,62 +149,6 @@ func main() {
 	s.Clear()
 }
 
-type control struct {
-	key         string
-	description string
-}
-
-func draw(s tcell.Screen, g grid, selectedPoints []vector2d, text string, controls []control, score int) {
-	s.Clear()
-
-	// Draw grid
-	drawGrid(s, g, selectedPoints)
-
-	// Draw text
-	screenWidth, screenHeight := s.Size()
-	const textOffsetX = (gridWidth * 2) + 3
-	drawText(s, textOffsetX, 0, screenWidth-1, 5, defaultStyle, text)
-
-	// Draw controls
-	drawControls(s, controls, textOffsetX, 6)
-
-	drawText(s, 0, gridHeight+1, screenWidth-1, screenHeight-1, defaultStyle,
-		fmt.Sprintf("Score: %s", humanize.Comma(int64(score))))
-
-	s.Show()
-}
-
-func drawControls(s tcell.Screen, controls []control, offsetX int, offsetY int) {
-	screenWidth, screenHeight := s.Size()
-
-	// TODO: Maybe extract into separate function or use lo.MinBy
-	keyLengths := make([]int, 0, len(controls))
-	for _, c := range controls {
-		keyLengths = append(keyLengths, utf8.RuneCountInString(c.key))
-	}
-	sort.Ints(keyLengths)
-	maxKeyLength := keyLengths[len(keyLengths)-1]
-
-	drawText(s, offsetX, offsetY, screenWidth-1, offsetY+1, defaultStyle, "Controls:")
-	for i, c := range controls {
-		y1 := offsetY + i + 1
-		y2 := offsetY + i + 2
-		if y1 < screenHeight {
-			drawText(s, offsetX, y1, offsetX+maxKeyLength, y2, defaultStyle, c.key)
-			drawText(s, offsetX+maxKeyLength+2, y1, screenWidth-1, y2, defaultStyle, c.description)
-		}
-	}
-}
-
-func computeScore(matches []match) int {
-	totalSymbolCount := 0
-	for _, m := range matches {
-		totalSymbolCount += m.length
-	}
-	score := totalSymbolCount * scorePerMatchedSymbol
-	return score
-}
-
 // todo: do initial refresh without animation and scoring
 func refreshGrid(s tcell.Screen, g *grid, r *rand.Rand, score *int, isScoring bool) {
 	ticker := time.NewTicker(150 * time.Millisecond)
@@ -239,35 +207,74 @@ func refreshGrid(s tcell.Screen, g *grid, r *rand.Rand, score *int, isScoring bo
 		// Instead of manually updating points list, could maybe just search through grid for empty points
 		// Assumes points are unique - duplicate points will cause strange behaviour
 		// Want to shift lower points first - hence sorting such that lower points (points with higher y) come first
-		sort.Slice(points, func(i, j int) bool {
-			if points[i].x == points[j].x {
-				return points[i].y > points[j].y
-			}
-			return points[i].x < points[j].x
-		})
+		sortPoints(points)
 		for len(points) > 0 {
-			p := points[0]
-			points = points[1:]
-
-			for y := p.y; y > 0; y-- {
-				g[y][p.x] = g[y-1][p.x]
-			}
-			g[0][p.x] = getRandomSymbol(r)
-
-			// Shift down remaining points in same column to account for shifting of corresponding empty points in grid
-			// p1.y++ for each point p1 in this column (with same x)
-			for i := 0; i < len(points); i++ {
-				p1 := &points[i]
-				// If point is in the same column and (strictly) above current point
-				if p1.x == p.x && p1.y < p.y {
-					p1.y++
-				}
-			}
+			shiftPoint(g, &points, r)
 
 			waitForKeyPressOrTimeout()
 			draw(s, *g, []vector2d{}, text, controls, *score)
 		}
 	}
+}
+
+// Match algorithm works in a way that scores the player the most points
+// * Prefers longer matches (checks for all possible matches and chooses the longest one) - to score the player more points
+// * Prefers lower down matches - idea is that this would score the player more points as more pieces falling means potentially more "automatic" matches
+// * "Maximal munch" behaviour - matches will be as long as possible; matches can be longer than the minimum match length
+// TODO: Somehow remove overlapping matches - noticed single match of 4 is counting as two matches
+func findMatches(g grid) []match {
+	directions := []vector2d{
+		{x: 1, y: 0},
+		{x: 0, y: 1},
+	}
+	matches := make([]match, 0, 10)
+	for _, d := range directions {
+		offset := vector2d{
+			x: max((d.x*minMatchLength)-1, 0),
+			y: max((d.y*minMatchLength)-1, 0),
+		}
+
+		d.y = -d.y
+
+		for i := gridHeight - 1; i >= offset.y; i-- {
+			for j := 0; j < gridWidth-offset.x; j++ {
+				matchLength := 0
+				originPoint := vector2d{x: j, y: i}
+				for {
+					currentPoint := vector2d{
+						x: j + (matchLength * d.x),
+						y: i + (matchLength * d.y),
+					}
+
+					if !isPointInsideGrid(currentPoint) {
+						break
+					}
+
+					isSameSymbol := g[originPoint.y][originPoint.x] == g[currentPoint.y][currentPoint.x]
+					if !isSameSymbol {
+						break
+					}
+
+					matchLength++
+				}
+
+				if matchLength >= minMatchLength {
+					matches = append(matches, newMatch(originPoint, d, matchLength))
+				}
+			}
+		}
+	}
+
+	return matches
+}
+
+func computeScore(matches []match) int {
+	totalSymbolCount := 0
+	for _, m := range matches {
+		totalSymbolCount += m.length
+	}
+	score := totalSymbolCount * scorePerMatchedSymbol
+	return score
 }
 
 func convertMatchesToPoints(matches []match) []vector2d {
@@ -297,6 +304,79 @@ func removeDuplicatePoints(points []vector2d) []vector2d {
 	return updatedPoints
 }
 
+func sortPoints(points []vector2d) {
+	sort.Slice(points, func(i, j int) bool {
+		if points[i].x == points[j].x {
+			return points[i].y > points[j].y
+		}
+		return points[i].x < points[j].x
+	})
+}
+
+func shiftPoint(g *grid, points *[]vector2d, r *rand.Rand) {
+	updatedPoints := *points
+
+	p := updatedPoints[0]
+	updatedPoints = updatedPoints[1:]
+
+	for y := p.y; y > 0; y-- {
+		g[y][p.x] = g[y-1][p.x]
+	}
+	g[0][p.x] = getRandomSymbol(r)
+
+	// Shift down remaining points in same column to account for shifting of corresponding empty points in grid
+	// p1.y++ for each point p1 in this column (with same x)
+	for i := 0; i < len(updatedPoints); i++ {
+		p1 := &updatedPoints[i]
+		// If point is in the same column and (strictly) above current point
+		if p1.x == p.x && p1.y < p.y {
+			p1.y++
+		}
+	}
+
+	*points = updatedPoints
+}
+
+// May want to revise this to allow potential matches longer than minimum match length
+// Add text warning that it may not be the optimal match
+func findPotentialMatch(g grid) []vector2d {
+	filters := generatePotentialMatchFilters()
+
+	for y := gridHeight - 1; y >= 0; y-- {
+		for x := 0; x < gridWidth; x++ {
+			for _, f := range filters {
+				// Don't need to compute size; could just check all filter's points are within grid
+				filterSize := computeObjectSize(f)
+
+				// Check filter would be inside the grid when positioned at current x,y coords
+				if x >= gridWidth-filterSize.x+1 || y < filterSize.y-1 {
+					continue
+				}
+
+				sameSymbol := true
+				origin := vector2d{x: x, y: y}
+				reference := f[0]
+				referenceGridCoords := vector2d{x: origin.x + reference.x, y: origin.y - reference.y}
+				fGridCoords := make([]vector2d, 0, len(f))
+				for _, p := range f {
+					pGridCoords := vector2d{x: origin.x + p.x, y: origin.y - p.y}
+					if g[pGridCoords.y][pGridCoords.x] != g[referenceGridCoords.y][referenceGridCoords.x] {
+						sameSymbol = false
+						break
+					}
+
+					fGridCoords = append(fGridCoords, pGridCoords)
+				}
+				if sameSymbol {
+					return fGridCoords
+				}
+			}
+		}
+	}
+
+	return []vector2d{}
+}
+
 func swapPoints(s tcell.Screen, g *grid, potentialMatch []vector2d, score int) {
 	point1 := vector2d{x: gridWidth / 2, y: gridHeight / 2} // Initialise point 1 to centre of grid
 	point2 := emptyVector2d
@@ -322,17 +402,6 @@ func swapPoints(s tcell.Screen, g *grid, potentialMatch []vector2d, score int) {
 	}
 
 	waitForKeyPress(s)
-}
-
-func waitForKeyPress(s tcell.Screen) {
-	keyPressed := false
-	for !keyPressed {
-		ev := s.PollEvent()
-		switch ev.(type) {
-		case *tcell.EventKey:
-			keyPressed = true
-		}
-	}
 }
 
 func selectFirstPoint(s tcell.Screen, g grid, potentialMatch []vector2d, point1Initial vector2d, score int) vector2d {
@@ -463,85 +532,15 @@ func selectSecondPoint(s tcell.Screen, g grid, point1 vector2d, score int) vecto
 	return point2
 }
 
-type vector2d struct {
-	x, y int
-}
-
-func max(x, y int) int {
-	if x > y {
-		return x
-	}
-	return y
-}
-
-// Maybe remove this and just use slice of points instead (?)
-type match struct {
-	position  vector2d
-	direction vector2d
-	length    int
-}
-
-func newMatch(position, direction vector2d, length int) match {
-	return match{
-		position:  position,
-		direction: direction,
-		length:    length,
-	}
-}
-
-func isPointInsideGrid(p vector2d) bool {
-	return p.x >= 0 && p.x < gridWidth && p.y >= 0 && p.y < gridHeight
-}
-
-// Match algorithm works in a way that scores the player the most points
-// * Prefers longer matches (checks for all possible matches and chooses the longest one) - to score the player more points
-// * Prefers lower down matches - idea is that this would score the player more points as more pieces falling means potentially more "automatic" matches
-// * "Maximal munch" behaviour - matches will be as long as possible; matches can be longer than the minimum match length
-// TODO: Somehow remove overlapping matches - noticed single match of 4 is counting as two matches
-func findMatches(g grid) []match {
-	directions := []vector2d{
-		{x: 1, y: 0},
-		{x: 0, y: 1},
-	}
-	matches := make([]match, 0, 10)
-	for _, d := range directions {
-		offset := vector2d{
-			x: max((d.x*minMatchLength)-1, 0),
-			y: max((d.y*minMatchLength)-1, 0),
-		}
-
-		d.y = -d.y
-
-		for i := gridHeight - 1; i >= offset.y; i-- {
-			for j := 0; j < gridWidth-offset.x; j++ {
-				matchLength := 0
-				originPoint := vector2d{x: j, y: i}
-				for {
-					currentPoint := vector2d{
-						x: j + (matchLength * d.x),
-						y: i + (matchLength * d.y),
-					}
-
-					if !isPointInsideGrid(currentPoint) {
-						break
-					}
-
-					isSameSymbol := g[originPoint.y][originPoint.x] == g[currentPoint.y][currentPoint.x]
-					if !isSameSymbol {
-						break
-					}
-
-					matchLength++
-				}
-
-				if matchLength >= minMatchLength {
-					matches = append(matches, newMatch(originPoint, d, matchLength))
-				}
-			}
+func waitForKeyPress(s tcell.Screen) {
+	keyPressed := false
+	for !keyPressed {
+		ev := s.PollEvent()
+		switch ev.(type) {
+		case *tcell.EventKey:
+			keyPressed = true
 		}
 	}
-
-	return matches
 }
 
 func generatePotentialMatchFilters() [][]vector2d {
@@ -635,44 +634,46 @@ func computeObjectSize(object []vector2d) vector2d {
 	return vector2d{x: xSize, y: ySize}
 }
 
-// May want to revise this to allow potential matches longer than minimum match length
-// Add text warning that it may not be the optimal match
-func findPotentialMatch(g grid) []vector2d {
-	filters := generatePotentialMatchFilters()
+func draw(s tcell.Screen, g grid, selectedPoints []vector2d, text string, controls []control, score int) {
+	s.Clear()
 
-	for y := gridHeight - 1; y >= 0; y-- {
-		for x := 0; x < gridWidth; x++ {
-			for _, f := range filters {
-				// Don't need to compute size; could just check all filter's points are within grid
-				filterSize := computeObjectSize(f)
+	// Draw grid
+	drawGrid(s, g, selectedPoints)
 
-				// Check filter would be inside the grid when positioned at current x,y coords
-				if x >= gridWidth-filterSize.x+1 || y < filterSize.y-1 {
-					continue
-				}
+	// Draw text
+	screenWidth, screenHeight := s.Size()
+	const textOffsetX = (gridWidth * 2) + 3
+	drawText(s, textOffsetX, 0, screenWidth-1, 5, defaultStyle, text)
 
-				sameSymbol := true
-				origin := vector2d{x: x, y: y}
-				reference := f[0]
-				referenceGridCoords := vector2d{x: origin.x + reference.x, y: origin.y - reference.y}
-				fGridCoords := make([]vector2d, 0, len(f))
-				for _, p := range f {
-					pGridCoords := vector2d{x: origin.x + p.x, y: origin.y - p.y}
-					if g[pGridCoords.y][pGridCoords.x] != g[referenceGridCoords.y][referenceGridCoords.x] {
-						sameSymbol = false
-						break
-					}
+	// Draw controls
+	drawControls(s, controls, textOffsetX, 6)
 
-					fGridCoords = append(fGridCoords, pGridCoords)
-				}
-				if sameSymbol {
-					return fGridCoords
-				}
-			}
+	drawText(s, 0, gridHeight+1, screenWidth-1, screenHeight-1, defaultStyle,
+		fmt.Sprintf("Score: %s", humanize.Comma(int64(score))))
+
+	s.Show()
+}
+
+func drawControls(s tcell.Screen, controls []control, offsetX int, offsetY int) {
+	screenWidth, screenHeight := s.Size()
+
+	// TODO: Maybe extract into separate function or use lo.MinBy
+	keyLengths := make([]int, 0, len(controls))
+	for _, c := range controls {
+		keyLengths = append(keyLengths, utf8.RuneCountInString(c.key))
+	}
+	sort.Ints(keyLengths)
+	maxKeyLength := keyLengths[len(keyLengths)-1]
+
+	drawText(s, offsetX, offsetY, screenWidth-1, offsetY+1, defaultStyle, "Controls:")
+	for i, c := range controls {
+		y1 := offsetY + i + 1
+		y2 := offsetY + i + 2
+		if y1 < screenHeight {
+			drawText(s, offsetX, y1, offsetX+maxKeyLength, y2, defaultStyle, c.key)
+			drawText(s, offsetX+maxKeyLength+2, y1, screenWidth-1, y2, defaultStyle, c.description)
 		}
 	}
-
-	return []vector2d{}
 }
 
 func drawText(s tcell.Screen, x1, y1, x2, y2 int, style tcell.Style, text string) {
@@ -717,4 +718,15 @@ func drawGrid(s tcell.Screen, g grid, selectedPoints []vector2d) {
 func getRandomSymbol(r *rand.Rand) rune {
 	index := r.Intn(len(symbols))
 	return symbols[index]
+}
+
+func isPointInsideGrid(p vector2d) bool {
+	return p.x >= 0 && p.x < gridWidth && p.y >= 0 && p.y < gridHeight
+}
+
+func max(x, y int) int {
+	if x > y {
+		return x
+	}
+	return y
 }
