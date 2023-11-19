@@ -496,22 +496,22 @@ func selectSecondPoint(s tcell.Screen, g grid, point1 vector2d, score int) vecto
 		switch ev := ev.(type) {
 		case *tcell.EventKey:
 			if ev.Key() == tcell.KeyUp || unicode.ToLower(ev.Rune()) == 'w' {
-				point2 = vector2d{
+				point2Updated = vector2d{
 					x: point1.x,
 					y: point1.y - 1,
 				}
 			} else if ev.Key() == tcell.KeyDown || unicode.ToLower(ev.Rune()) == 's' {
-				point2 = vector2d{
+				point2Updated = vector2d{
 					x: point1.x,
 					y: point1.y + 1,
 				}
 			} else if ev.Key() == tcell.KeyLeft || unicode.ToLower(ev.Rune()) == 'a' {
-				point2 = vector2d{
+				point2Updated = vector2d{
 					x: point1.x - 1,
 					y: point1.y,
 				}
 			} else if ev.Key() == tcell.KeyRight || unicode.ToLower(ev.Rune()) == 'd' {
-				point2 = vector2d{
+				point2Updated = vector2d{
 					x: point1.x + 1,
 					y: point1.y,
 				}
