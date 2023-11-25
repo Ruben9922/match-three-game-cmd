@@ -48,6 +48,7 @@ func selectFirstPoint(s tcell.Screen, g grid, potentialMatch []vector2d, point1I
 		{key: "← ↑ → ↓ / WASD", description: "Move selection"},
 		{key: "Enter", description: "Select"},
 		{key: "H", description: "Show hint"},
+		{key: "Q", description: "End Game"},
 	}
 	hintControls := []control{
 		{key: "<Any key>", description: "Hide hint"},
@@ -62,6 +63,9 @@ func selectFirstPoint(s tcell.Screen, g grid, potentialMatch []vector2d, point1I
 		case *tcell.EventKey:
 			if showPotentialMatch {
 				showPotentialMatch = false
+			} else if unicode.ToLower(ev.Rune()) == 'q' {
+				drawQuitConfirmationScreen(s, g, score)
+				updateQuitConfirmationScreen(s)
 			} else {
 				if ev.Key() == tcell.KeyUp || unicode.ToLower(ev.Rune()) == 'w' {
 					point1.y--
@@ -118,6 +122,7 @@ func selectSecondPoint(s tcell.Screen, g grid, point1 vector2d, score int) vecto
 		{key: "← ↑ → ↓ / WASD", description: "Move selection"},
 		{key: "Enter", description: "Select"},
 		{key: "Escape", description: "Cancel selection"},
+		{key: "Q", description: "End Game"},
 	}
 
 	draw(s, g, []vector2d{point1, point2}, generateText(), controls, score)
@@ -127,7 +132,10 @@ func selectSecondPoint(s tcell.Screen, g grid, point1 vector2d, score int) vecto
 		ev := s.PollEvent()
 		switch ev := ev.(type) {
 		case *tcell.EventKey:
-			if ev.Key() == tcell.KeyUp || unicode.ToLower(ev.Rune()) == 'w' {
+			if unicode.ToLower(ev.Rune()) == 'q' {
+				drawQuitConfirmationScreen(s, g, score)
+				updateQuitConfirmationScreen(s)
+			} else if ev.Key() == tcell.KeyUp || unicode.ToLower(ev.Rune()) == 'w' {
 				point2Updated = vector2d{
 					x: point1.x,
 					y: point1.y - 1,

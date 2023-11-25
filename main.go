@@ -94,7 +94,6 @@ var remainingMoveCount int
 
 func main() {
 	// TODO: Consider using something like bubbletea instead
-	// TODO: Quit on Escape / "q" key
 	// TODO: Try using emojis instead of letters (maybe make this optional)
 	// TODO: Add different game modes - e.g. endless, timed, limited number of moves
 	// TODO: Check resizing
@@ -148,7 +147,7 @@ func main() {
 		refreshGrid(s, &g, r, &score, true)
 	}
 
-	draw(s, g, []vector2d{}, "Game over!\n\nNo more moves left.", []control{{key: "<Any key>", description: "Exit"}}, score)
+	drawGameOverScreen(s, g, score)
 	waitForKeyPress(s)
 
 	// todo: fix having to press twice

@@ -159,3 +159,33 @@ func drawGrid(s tcell.Screen, g grid, selectedPoints []vector2d) {
 		}
 	}
 }
+
+func drawGameOverScreen(s tcell.Screen, g grid, score int) {
+	const text = "Game over!\n\nNo more moves left."
+	controls := []control{{key: "<Any key>", description: "Exit"}}
+
+	draw(s, g, []vector2d{}, text, controls, score)
+}
+
+func drawQuitConfirmationScreen(s tcell.Screen, g grid, score int) {
+	const text = "Are you sure you want to quit?\n\nAny game progress will be lost."
+	controls := []control{
+		{key: "Enter", description: "Quit"},
+		{key: "<Any other key>", description: "Cancel"},
+	}
+
+	draw(s, g, []vector2d{}, text, controls, score)
+}
+
+func updateQuitConfirmationScreen(s tcell.Screen) {
+	for {
+		ev := s.PollEvent()
+		switch ev := ev.(type) {
+		case *tcell.EventKey:
+			if ev.Key() == tcell.KeyEnter {
+				quit(s)
+			}
+			return
+		}
+	}
+}
