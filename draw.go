@@ -88,11 +88,8 @@ func draw(s tcell.Screen, g grid, selectedPoints []vector2d, text string, contro
 	drawText(s, 0, gridHeight+1, screenWidth-1, gridHeight+1, defaultStyle,
 		fmt.Sprintf("Score: %s", humanize.Comma(int64(score))))
 
-	drawText(s, 0, gridHeight+3, screenWidth-1, gridHeight+3, defaultStyle,
-		fmt.Sprintf("Game type: %s", options.gameType))
-
 	if options.gameType == LimitedMoves {
-		drawText(s, 0, gridHeight+4, screenWidth-1, screenHeight-1, defaultStyle,
+		drawText(s, 0, gridHeight+3, screenWidth-1, screenHeight-1, defaultStyle,
 			fmt.Sprintf("Remaining moves: %d", remainingMoveCount))
 	}
 

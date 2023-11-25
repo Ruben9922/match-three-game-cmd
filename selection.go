@@ -39,11 +39,7 @@ func swapPoints(s tcell.Screen, g *grid, potentialMatch []vector2d, score int) b
 func selectFirstPoint(s tcell.Screen, g grid, potentialMatch []vector2d, point1Initial vector2d, score int) vector2d {
 	point1 := point1Initial
 
-	generateText := func() string {
-		return fmt.Sprintf(
-			"Select two points to swap (selecting point 1)...\n\nCurrent selection: %c (%d, %d)",
-			g[point1.y][point1.x], point1.x, point1.y)
-	}
+	const text = "Select two points to swap (selecting point 1)..."
 	controls := []control{
 		{key: "← ↑ → ↓ / WASD", description: "Move selection"},
 		{key: "Enter", description: "Select"},
@@ -54,15 +50,15 @@ func selectFirstPoint(s tcell.Screen, g grid, potentialMatch []vector2d, point1I
 		{key: "<Any key>", description: "Hide hint"},
 	}
 
-	draw(s, g, []vector2d{point1}, generateText(), controls, score)
+	draw(s, g, []vector2d{point1}, text, controls, score)
 	selected := false
-	showPotentialMatch := false
+	showHint := false
 	for !selected {
 		ev := s.PollEvent()
 		switch ev := ev.(type) {
 		case *tcell.EventKey:
-			if showPotentialMatch {
-				showPotentialMatch = false
+			if showHint {
+				showHint = false
 			} else if unicode.ToLower(ev.Rune()) == 'q' {
 				drawQuitConfirmationScreen(s, g, score)
 				updateQuitConfirmationScreen(s)
@@ -84,15 +80,15 @@ func selectFirstPoint(s tcell.Screen, g grid, potentialMatch []vector2d, point1I
 
 				if unicode.ToLower(ev.Rune()) == 'h' {
 					// todo: score no points if hint shown (?)
-					showPotentialMatch = true
+					showHint = true
 				}
 			}
 		}
 
-		if showPotentialMatch {
-			draw(s, g, potentialMatch, generateText()+"\nShowing hint", hintControls, score)
+		if showHint {
+			draw(s, g, potentialMatch, "Showing hint", hintControls, score)
 		} else {
-			draw(s, g, []vector2d{point1}, generateText(), controls, score)
+			draw(s, g, []vector2d{point1}, text, controls, score)
 		}
 	}
 
@@ -111,13 +107,7 @@ func selectSecondPoint(s tcell.Screen, g grid, point1 vector2d, score int) vecto
 		point2.y--
 	}
 
-	generateText := func() string {
-		return fmt.Sprintf(
-			"Select two points to swap (selecting point 2)...\n\n"+
-				"Point 1: %c (%d, %d)\n"+
-				"Current selection: %c (%d, %d)",
-			g[point1.y][point1.x], point1.x, point1.y, g[point2.y][point2.x], point2.x, point2.y)
-	}
+	const text = "Select two points to swap (selecting point 2)..."
 	controls := []control{
 		{key: "← ↑ → ↓ / WASD", description: "Move selection"},
 		{key: "Enter", description: "Select"},
@@ -125,7 +115,7 @@ func selectSecondPoint(s tcell.Screen, g grid, point1 vector2d, score int) vecto
 		{key: "Q", description: "End Game"},
 	}
 
-	draw(s, g, []vector2d{point1, point2}, generateText(), controls, score)
+	draw(s, g, []vector2d{point1, point2}, text, controls, score)
 	selected := false
 	point2Updated := point2
 	for !selected {
@@ -166,7 +156,7 @@ func selectSecondPoint(s tcell.Screen, g grid, point1 vector2d, score int) vecto
 			point2 = point2Updated
 		}
 
-		draw(s, g, []vector2d{point1, point2}, generateText(), controls, score)
+		draw(s, g, []vector2d{point1, point2}, text, controls, score)
 	}
 
 	return point2
