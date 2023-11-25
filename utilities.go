@@ -22,12 +22,11 @@ func max(x, y int) int {
 }
 
 func waitForKeyPress(s tcell.Screen) {
-	keyPressed := false
-	for !keyPressed {
+	for {
 		ev := s.PollEvent()
 		switch ev.(type) {
 		case *tcell.EventKey:
-			keyPressed = true
+			return
 		}
 	}
 }

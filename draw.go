@@ -6,6 +6,7 @@ import (
 	"github.com/gdamore/tcell"
 	"sort"
 	"strings"
+	"unicode"
 	"unicode/utf8"
 )
 
@@ -22,7 +23,52 @@ func drawTitleScreen(s tcell.Screen) {
 		titlePart1,
 		titlePart2,
 		text,
+		drawRadioButtons([]gameType{Endless, LimitedMoves}, options.gameType, "Game type", "T"),
 	}, "\n"))
+
+	s.Show()
+}
+
+type radioButtonItem interface {
+	comparable
+	String() string
+}
+
+func drawRadioButtons[T radioButtonItem](options []T, selected T, label string, key string) string {
+	var builder strings.Builder
+	builder.WriteString(label)
+	builder.WriteString(": ")
+	for i, option := range options {
+		if option == selected {
+			builder.WriteString(option.String() + " [▪]")
+		} else {
+			builder.WriteString(option.String() + " [ ]")
+		}
+
+		if i != len(options)-1 {
+			builder.WriteString(";")
+		}
+
+		builder.WriteString(" ")
+	}
+	builder.WriteString(fmt.Sprintf("(press %s)", strings.ToUpper(key)))
+
+	return builder.String()
+}
+
+func updateTitleScreen(s tcell.Screen) {
+	for {
+		ev := s.PollEvent()
+		switch ev := ev.(type) {
+		case *tcell.EventKey:
+			if unicode.ToLower(ev.Rune()) == 't' {
+				options.gameType = toggleGameType(options.gameType)
+				drawTitleScreen(s)
+			} else {
+				return
+			}
+		}
+	}
 }
 
 func draw(s tcell.Screen, g grid, selectedPoints []vector2d, text string, controls []control, score int) {
@@ -39,8 +85,16 @@ func draw(s tcell.Screen, g grid, selectedPoints []vector2d, text string, contro
 	// Draw controls
 	drawControls(s, controls, textOffsetX, 6)
 
-	drawText(s, 0, gridHeight+1, screenWidth-1, screenHeight-1, defaultStyle,
+	drawText(s, 0, gridHeight+1, screenWidth-1, gridHeight+1, defaultStyle,
 		fmt.Sprintf("Score: %s", humanize.Comma(int64(score))))
+
+	drawText(s, 0, gridHeight+3, screenWidth-1, gridHeight+3, defaultStyle,
+		fmt.Sprintf("Game type: %s", options.gameType))
+
+	if options.gameType == LimitedMoves {
+		drawText(s, 0, gridHeight+4, screenWidth-1, screenHeight-1, defaultStyle,
+			fmt.Sprintf("Remaining moves: %d", remainingMoveCount))
+	}
 
 	s.Show()
 }

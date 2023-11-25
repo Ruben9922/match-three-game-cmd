@@ -7,7 +7,7 @@ import (
 	"unicode"
 )
 
-func swapPoints(s tcell.Screen, g *grid, potentialMatch []vector2d, score int) {
+func swapPoints(s tcell.Screen, g *grid, potentialMatch []vector2d, score int) bool {
 	point1 := vector2d{x: gridWidth / 2, y: gridHeight / 2} // Initialise point 1 to centre of grid
 	point2 := emptyVector2d
 	for point2 == emptyVector2d {
@@ -32,6 +32,8 @@ func swapPoints(s tcell.Screen, g *grid, potentialMatch []vector2d, score int) {
 	}
 
 	waitForKeyPress(s)
+
+	return len(matches) != 0
 }
 
 func selectFirstPoint(s tcell.Screen, g grid, potentialMatch []vector2d, point1Initial vector2d, score int) vector2d {

@@ -45,10 +45,27 @@ type control struct {
 	description string
 }
 
+type gameType int
+
+const (
+	Endless gameType = iota
+	LimitedMoves
+)
+
+func (gt gameType) String() string {
+	return [...]string{"Endless", "Limited moves"}[gt]
+}
+
+// Initialise options
+var options = struct {
+	gameType gameType
+}{gameType: Endless}
+
 const gridHeight int = 10
 const gridWidth int = 10
 const minMatchLength int = 3
-const scorePerMatchedSymbol = 40
+const scorePerMatchedSymbol int = 40
+const moveLimit int = 20
 
 const emptySymbol rune = ' '
 
@@ -72,6 +89,9 @@ var symbolHighlightedColors = map[rune]tcell.Style{
 
 var defaultStyle = tcell.StyleDefault.Background(tcell.ColorDefault).Foreground(tcell.ColorDefault)
 
+// todo: improve this
+var remainingMoveCount int
+
 func main() {
 	// TODO: Consider using something like bubbletea instead
 	// TODO: Quit on Escape / "q" key
@@ -92,7 +112,7 @@ func main() {
 
 	// Display title screen
 	drawTitleScreen(s)
-	waitForKeyPress(s)
+	updateTitleScreen(s)
 
 	// Initialise random number generator
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
@@ -100,10 +120,13 @@ func main() {
 	// Initialise game
 	g := newGrid(r)
 	score := 0
+	if options.gameType == LimitedMoves {
+		remainingMoveCount = moveLimit
+	}
 
 	refreshGrid(s, &g, r, &score, false)
 
-	for {
+	for options.gameType != LimitedMoves || remainingMoveCount > 0 {
 		// todo: use nil everywhere instead of empty slice
 		potentialMatch := make([]vector2d, 0)
 		for len(potentialMatch) == 0 {
@@ -116,33 +139,34 @@ func main() {
 		}
 
 		// todo: fix initial extra key press
-		swapPoints(s, &g, potentialMatch, score)
+		swapped := swapPoints(s, &g, potentialMatch, score)
+
+		if options.gameType == LimitedMoves && swapped {
+			remainingMoveCount--
+		}
 
 		refreshGrid(s, &g, r, &score, true)
 	}
 
-	quit := func() {
-		s.Fini()
-		os.Exit(0)
-	}
+	draw(s, g, []vector2d{}, "Game over!\n\nNo more moves left.", []control{{key: "<Any key>", description: "Exit"}}, score)
+	waitForKeyPress(s)
 
-	for {
-		// Update screen
-		s.Show()
-
-		// Poll event
-		ev := s.PollEvent()
-
-		// Process event
-		switch ev := ev.(type) {
-		case *tcell.EventResize:
-			s.Sync()
-		case *tcell.EventKey:
-			if ev.Key() == tcell.KeyEscape || ev.Key() == tcell.KeyCtrlC {
-				quit()
-			}
-		}
-	}
+	// todo: fix having to press twice
 
 	s.Clear()
+
+	quit(s)
+}
+
+func toggleGameType(gt gameType) gameType {
+	if gt == Endless {
+		return LimitedMoves
+	}
+
+	return Endless
+}
+
+func quit(s tcell.Screen) {
+	s.Fini()
+	os.Exit(0)
 }
