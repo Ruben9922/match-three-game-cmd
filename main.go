@@ -69,7 +69,7 @@ const moveLimit int = 20
 
 const emptySymbol rune = ' '
 
-var symbols = []rune{'A', 'B', 'C', 'D', 'E', 'F'}
+var symbols = []rune{'●', '▲', '■', '◆', '★', '❤'}
 var symbolColors = map[rune]tcell.Style{
 	symbols[0]: tcell.StyleDefault.Background(tcell.ColorDefault).Foreground(tcell.ColorWhite),
 	symbols[1]: tcell.StyleDefault.Background(tcell.ColorDefault).Foreground(tcell.ColorDarkCyan),
