@@ -78,10 +78,10 @@ func createSelectFirstPointView(m model) string {
 	var controlsString string
 	var selectedPoints []vector2d
 	if m.showHint {
-		controlsString = controlsToString(controls)
+		controlsString = controlsToString(hintControls)
 		selectedPoints = m.potentialMatch
 	} else {
-		controlsString = controlsToString(hintControls)
+		controlsString = controlsToString(controls)
 		selectedPoints = []vector2d{m.point1}
 	}
 	selectFirstPointText := lipgloss.JoinVertical(lipgloss.Left, text, controlsString)
