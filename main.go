@@ -1,8 +1,9 @@
 package main
 
 import (
-	"github.com/gdamore/tcell"
-	"log"
+	"fmt"
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"math/rand"
 	"os"
 	"time"
@@ -56,10 +57,9 @@ func (gt gameType) String() string {
 	return [...]string{"Endless", "Limited moves"}[gt]
 }
 
-// Initialise options
-var options = struct {
+type options struct {
 	gameType gameType
-}{gameType: Endless}
+}
 
 const gridHeight int = 10
 const gridWidth int = 10
@@ -70,92 +70,75 @@ const moveLimit int = 20
 const emptySymbol rune = ' '
 
 var symbols = []rune{'●', '▲', '■', '◆', '★', '❤'}
-var symbolColors = map[rune]tcell.Style{
-	symbols[0]: tcell.StyleDefault.Background(tcell.ColorDefault).Foreground(tcell.ColorWhite),
-	symbols[1]: tcell.StyleDefault.Background(tcell.ColorDefault).Foreground(tcell.ColorDarkCyan),
-	symbols[2]: tcell.StyleDefault.Background(tcell.ColorDefault).Foreground(tcell.ColorDarkMagenta),
-	symbols[3]: tcell.StyleDefault.Background(tcell.ColorDefault).Foreground(tcell.ColorGreen),
-	symbols[4]: tcell.StyleDefault.Background(tcell.ColorDefault).Foreground(tcell.ColorRed),
-	symbols[5]: tcell.StyleDefault.Background(tcell.ColorDefault).Foreground(tcell.ColorYellow),
+var symbolColors = map[rune]lipgloss.Style{
+	symbols[0]: lipgloss.NewStyle().Foreground(lipgloss.Color("15")),
+	symbols[1]: lipgloss.NewStyle().Foreground(lipgloss.Color("274")),
+	symbols[2]: lipgloss.NewStyle().Foreground(lipgloss.Color("279")),
+	symbols[3]: lipgloss.NewStyle().Foreground(lipgloss.Color("2")),
+	symbols[4]: lipgloss.NewStyle().Foreground(lipgloss.Color("9")),
+	symbols[5]: lipgloss.NewStyle().Foreground(lipgloss.Color("11")),
 }
-var symbolHighlightedColors = map[rune]tcell.Style{
-	symbols[0]: tcell.StyleDefault.Background(tcell.ColorWhite).Foreground(tcell.ColorDefault),
-	symbols[1]: tcell.StyleDefault.Background(tcell.ColorDarkCyan).Foreground(tcell.ColorDefault),
-	symbols[2]: tcell.StyleDefault.Background(tcell.ColorDarkMagenta).Foreground(tcell.ColorDefault),
-	symbols[3]: tcell.StyleDefault.Background(tcell.ColorGreen).Foreground(tcell.ColorDefault),
-	symbols[4]: tcell.StyleDefault.Background(tcell.ColorRed).Foreground(tcell.ColorDefault),
-	symbols[5]: tcell.StyleDefault.Background(tcell.ColorYellow).Foreground(tcell.ColorDefault),
+var symbolHighlightedColors = map[rune]lipgloss.Style{
+	symbols[0]: lipgloss.NewStyle().Background(lipgloss.Color("15")),
+	symbols[1]: lipgloss.NewStyle().Background(lipgloss.Color("274")),
+	symbols[2]: lipgloss.NewStyle().Background(lipgloss.Color("279")),
+	symbols[3]: lipgloss.NewStyle().Background(lipgloss.Color("2")),
+	symbols[4]: lipgloss.NewStyle().Background(lipgloss.Color("9")),
+	symbols[5]: lipgloss.NewStyle().Background(lipgloss.Color("11")),
 }
 
-var defaultStyle = tcell.StyleDefault.Background(tcell.ColorDefault).Foreground(tcell.ColorDefault)
+type view int
 
-// todo: improve this
-var remainingMoveCount int
+const (
+	TitleView view = iota
+	SelectFirstPointView
+	SelectSecondPointView
+	SelectPointConfirmationView
+	//RefreshGridView
+	QuitConfirmationView
+	GameOverView
+)
 
-func main() {
-	// TODO: Consider using something like bubbletea instead
-	// TODO: Try using emojis instead of letters (maybe make this optional)
-	// TODO: Add different game modes - e.g. endless, timed, limited number of moves
-	// TODO: Check resizing
-	// TODO: Reorder code
-	s, err := tcell.NewScreen()
-	if err != nil {
-		log.Fatalf("%+v", err)
-	}
-	if err := s.Init(); err != nil {
-		log.Fatalf("%+v", err)
-	}
-
-	// Set default text style
-	s.SetStyle(defaultStyle)
-
-	// Display title screen
-	drawTitleScreen(s)
-	updateTitleScreen(s)
-
-	// Initialise random number generator
-	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-
-	// Initialise game
-	g := newGrid(r)
-	score := 0
-	if options.gameType == LimitedMoves {
-		remainingMoveCount = moveLimit
-	}
-
-	refreshGrid(s, &g, r, &score, false)
-
-	for options.gameType != LimitedMoves || remainingMoveCount > 0 {
-		// todo: use nil everywhere instead of empty slice
-		potentialMatch := make([]vector2d, 0)
-		for len(potentialMatch) == 0 {
-			// Check if there are any possible matches; if no possible matches then create a new grid
-			potentialMatch = findPotentialMatch(g)
-			if len(potentialMatch) == 0 {
-				g = newGrid(r)
-				refreshGrid(s, &g, r, &score, false)
-			}
-		}
-
-		// todo: fix initial extra key press
-		swapped := swapPoints(s, &g, potentialMatch, score)
-
-		if options.gameType == LimitedMoves && swapped {
-			remainingMoveCount--
-		}
-
-		refreshGrid(s, &g, r, &score, true)
-	}
-
-	drawGameOverScreen(s, g, score)
-	waitForKeyPress(s)
-
-	// todo: fix having to press twice
-
-	s.Clear()
-
-	quit(s)
+type model struct {
+	rand               *rand.Rand
+	grid               grid
+	score              int
+	options            options
+	remainingMoveCount int
+	view               view
+	previousView       view
+	point1             vector2d
+	point2             vector2d
+	//animationQueue      []grid
+	showHint       bool
+	potentialMatch []vector2d
 }
+
+func initialModel(r *rand.Rand) model {
+	return model{
+		rand:               r,
+		grid:               newGrid(r),
+		score:              0,
+		options:            options{gameType: Endless},
+		remainingMoveCount: moveLimit,
+		view:               TitleView,
+		point1:             emptyVector2d,
+		point2:             emptyVector2d,
+		//animationQueue:      make([]grid, 0),
+		showHint:       false,
+		potentialMatch: make([]vector2d, 0),
+	}
+}
+
+//type tickMsg time.Time
+
+//func mainold() {
+// TODO: Add different game modes - e.g. endless, timed, limited number of moves
+// TODO: Check resizing
+// TODO: Reorder code
+
+// todo: fix having to press twice
+//}
 
 func toggleGameType(gt gameType) gameType {
 	if gt == Endless {
@@ -165,7 +148,214 @@ func toggleGameType(gt gameType) gameType {
 	return Endless
 }
 
-func quit(s tcell.Screen) {
-	s.Fini()
-	os.Exit(0)
+func (m model) Init() tea.Cmd {
+	return nil
+}
+
+//func tickCmd() tea.Cmd {
+//	return tea.Tick(150*time.Millisecond, func(t time.Time) tea.Msg {
+//		return tickMsg(t)
+//	})
+//}
+
+func getInitialPoint2(point1 vector2d) vector2d {
+	if point1.y == 0 {
+		if point1.x == gridWidth-1 {
+			return vector2d{
+				x: point1.x - 1,
+				y: point1.y,
+			}
+		} else {
+			return vector2d{
+				x: point1.x + 1,
+				y: point1.y,
+			}
+		}
+	} else {
+		return vector2d{
+			x: point1.x,
+			y: point1.y - 1,
+		}
+	}
+}
+
+func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		switch m.view {
+		case TitleView:
+			if msg.String() == "t" {
+				m.options.gameType = toggleGameType(m.options.gameType)
+			} else {
+				//m.view = RefreshGridView
+				refreshGrid(&m.grid, m.rand, &m.score, false)
+
+				// todo: make this code not duplicated
+				m.potentialMatch = make([]vector2d, 0)
+				for len(m.potentialMatch) == 0 {
+					// Check if there are any possible matches; if no possible matches then create a new grid
+					m.potentialMatch = findPotentialMatch(m.grid)
+					if len(m.potentialMatch) == 0 {
+						m.grid = newGrid(m.rand)
+						refreshGrid(&m.grid, m.rand, &m.score, true)
+					}
+				}
+
+				m.view = SelectFirstPointView
+				m.point1 = vector2d{x: gridWidth / 2, y: gridHeight / 2} // Initialise point 1 to centre of grid
+				m.point2 = emptyVector2d
+
+				//return m, tickCmd()
+			}
+		case SelectFirstPointView:
+			if msg.String() == "enter" {
+				m.view = SelectSecondPointView
+				m.point2 = getInitialPoint2(m.point1)
+				return m, nil
+			}
+			switch msg.String() {
+			case "up", "w":
+				m.point1.y--
+				m.point1.y = (m.point1.y + gridHeight) % gridHeight // Clamp y coordinate between 0 and gridHeight - 1
+			case "down", "s":
+				m.point1.y++
+				m.point1.y = (m.point1.y + gridHeight) % gridHeight // Clamp y coordinate between 0 and gridHeight - 1
+			case "left", "a":
+				m.point1.x--
+				m.point1.x = (m.point1.x + gridWidth) % gridWidth // Clamp x coordinate between 0 and gridWidth - 1
+			case "right", "d":
+				m.point1.x++
+				m.point1.x = (m.point1.x + gridWidth) % gridWidth // Clamp x coordinate between 0 and gridWidth - 1
+			}
+
+			m.showHint = !m.showHint && msg.String() == "h"
+		case SelectSecondPointView:
+			if msg.String() == "enter" {
+				// Swap the points, if it would result in a match
+				updatedGrid := m.grid
+				updatedGrid[m.point1.y][m.point1.x], updatedGrid[m.point2.y][m.point2.x] =
+					updatedGrid[m.point2.y][m.point2.x], updatedGrid[m.point1.y][m.point1.x]
+				matches := findMatches(updatedGrid)
+				if len(matches) != 0 {
+					m.grid = updatedGrid
+
+					if m.options.gameType == LimitedMoves {
+						m.remainingMoveCount--
+					}
+				}
+
+				m.view = SelectPointConfirmationView
+				return m, nil
+			}
+
+			if msg.String() == "escape" {
+				m.view = SelectFirstPointView
+				m.point1 = vector2d{x: gridWidth / 2, y: gridHeight / 2} // Initialise point 1 to centre of grid
+				m.point2 = emptyVector2d
+				return m, nil
+			}
+
+			var point2Updated vector2d
+			switch msg.String() {
+			case "up", "w":
+				point2Updated = vector2d{
+					x: m.point1.x,
+					y: m.point1.y - 1,
+				}
+			case "down", "s":
+				point2Updated = vector2d{
+					x: m.point1.x,
+					y: m.point1.y + 1,
+				}
+			case "left", "a":
+				point2Updated = vector2d{
+					x: m.point1.x - 1,
+					y: m.point1.y,
+				}
+			case "right", "d":
+				point2Updated = vector2d{
+					x: m.point1.x + 1,
+					y: m.point1.y,
+				}
+			}
+			if isPointInsideGrid(point2Updated) {
+				m.point2 = point2Updated
+			}
+		case SelectPointConfirmationView:
+			// Refresh grid
+			//m.view = RefreshGridView
+
+			refreshGrid(&m.grid, m.rand, &m.score, true)
+
+			// todo: use nil everywhere instead of empty slice
+			m.potentialMatch = make([]vector2d, 0)
+			for len(m.potentialMatch) == 0 {
+				// Check if there are any possible matches; if no possible matches then create a new grid
+				m.potentialMatch = findPotentialMatch(m.grid)
+				if len(m.potentialMatch) == 0 {
+					m.grid = newGrid(m.rand)
+					refreshGrid(&m.grid, m.rand, &m.score, true)
+				}
+			}
+
+			// todo: fix initial extra key press
+			// swapped := swapPoints(s, &g, potentialMatch, score)
+
+			//refreshGrid(&m.grid, m.rand, &m.score, true)
+
+			if m.options.gameType != LimitedMoves || m.remainingMoveCount > 0 {
+				m.view = SelectFirstPointView
+				m.point1 = vector2d{x: gridWidth / 2, y: gridHeight / 2} // Initialise point 1 to centre of grid
+				m.point2 = emptyVector2d
+			} else {
+				m.view = GameOverView
+				m.point1 = emptyVector2d
+				m.point2 = emptyVector2d
+			}
+		case GameOverView:
+			return m, tea.Quit
+		case QuitConfirmationView:
+			if msg.String() == "enter" {
+				return m, tea.Quit
+			}
+			m.view = m.previousView
+			//default:
+			//	m.previousView = m.view
+			//	m.view = QuitConfirmationView
+		}
+		//case tickMsg:
+		//return m, tickCmd()
+	}
+
+	return m, nil
+}
+
+func (m model) View() string {
+	switch m.view {
+	case TitleView:
+		return createTitleView(m)
+	case SelectFirstPointView:
+		return createSelectFirstPointView(m)
+	case SelectSecondPointView:
+		return createSelectSecondPointView(m)
+	case SelectPointConfirmationView:
+		return createSelectPointConfirmationView(m)
+	//case RefreshGridView:
+	//	return createGridView(m)
+	case QuitConfirmationView:
+		return createQuitConfirmationView()
+	case GameOverView:
+		return createGameOverView()
+	default:
+		return ""
+	}
+}
+
+func main() {
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	p := tea.NewProgram(initialModel(r))
+	if _, err := p.Run(); err != nil {
+		fmt.Printf("Error: %v", err)
+		os.Exit(1)
+	}
 }

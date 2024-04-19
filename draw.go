@@ -2,31 +2,27 @@ package main
 
 import (
 	"fmt"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/dustin/go-humanize"
-	"github.com/gdamore/tcell"
-	"sort"
+	"slices"
 	"strings"
-	"unicode"
-	"unicode/utf8"
 )
 
-func drawTitleScreen(s tcell.Screen) {
-	s.Clear()
-
-	screenWidth, screenHeight := s.Size()
-
+func createTitleView(m model) string {
 	const titlePart1 = "  __  __       _       _       _____ _                   \n |  \\/  | __ _| |_ ___| |__   |_   _| |__  _ __ ___  ___ \n | |\\/| |/ _` | __/ __| '_ \\    | | | '_ \\| '__/ _ \\/ _ \\\n | |  | | (_| | || (__| | | |   | | | | | | | |  __/  __/\n |_|  |_|\\__,_|\\__\\___|_| |_|   |_| |_| |_|_|  \\___|\\___|"
 	const titlePart2 = "   ____                      \n  / ___| __ _ _ __ ___   ___ \n | |  _ / _` | '_ ` _ \\ / _ \\\n | |_| | (_| | | | | | |  __/\n  \\____|\\__,_|_| |_| |_|\\___|"
 	const text = "\n Press any key to start..."
 
-	drawText(s, 0, 0, screenWidth-1, screenHeight-1, defaultStyle, strings.Join([]string{
-		titlePart1,
-		titlePart2,
-		text,
-		drawRadioButtons([]gameType{Endless, LimitedMoves}, options.gameType, "Game type", "T"),
-	}, "\n"))
+	radioButtons := drawRadioButtons([]gameType{Endless, LimitedMoves}, m.options.gameType, "Game type", "T")
 
-	s.Show()
+	titleView := lipgloss.JoinVertical(lipgloss.Left, titlePart1, titlePart2, text, radioButtons)
+
+	controls := []control{
+		{key: "t", description: "change game type"},
+		{key: "any other key", description: "start"},
+	}
+	controlsView := controlsToString(controls)
+	return lipgloss.JoinVertical(lipgloss.Left, titleView, controlsView)
 }
 
 type radioButtonItem interface {
@@ -56,133 +52,71 @@ func drawRadioButtons[T radioButtonItem](options []T, selected T, label string, 
 	return builder.String()
 }
 
-func updateTitleScreen(s tcell.Screen) {
-	for {
-		ev := s.PollEvent()
-		switch ev := ev.(type) {
-		case *tcell.EventKey:
-			if unicode.ToLower(ev.Rune()) == 't' {
-				options.gameType = toggleGameType(options.gameType)
-				drawTitleScreen(s)
-			} else {
-				return
-			}
-		}
-	}
-}
-
-func draw(s tcell.Screen, g grid, selectedPoints []vector2d, text string, controls []control, score int) {
-	s.Clear()
-
-	// Draw grid
-	drawGrid(s, g, selectedPoints)
-
-	// Draw text
-	screenWidth, screenHeight := s.Size()
-	const textOffsetX = (gridWidth * 2) + 3
-	drawText(s, textOffsetX, 0, screenWidth-1, 5, defaultStyle, text)
-
-	// Draw controls
-	drawControls(s, controls, textOffsetX, 6)
-
-	drawText(s, 0, gridHeight+1, screenWidth-1, gridHeight+1, defaultStyle,
-		fmt.Sprintf("Score: %s", humanize.Comma(int64(score))))
-
-	if options.gameType == LimitedMoves {
-		drawText(s, 0, gridHeight+3, screenWidth-1, screenHeight-1, defaultStyle,
-			fmt.Sprintf("Remaining moves: %d", remainingMoveCount))
-	}
-
-	s.Show()
-}
-
-func drawControls(s tcell.Screen, controls []control, offsetX int, offsetY int) {
-	screenWidth, screenHeight := s.Size()
-
-	// TODO: Maybe extract into separate function or use lo.MinBy
-	keyLengths := make([]int, 0, len(controls))
+func controlsToString(controls []control) string {
+	controlStrings := make([]string, 0, len(controls))
 	for _, c := range controls {
-		keyLengths = append(keyLengths, utf8.RuneCountInString(c.key))
+		controlString := fmt.Sprintf("%s: %s", c.key, c.description)
+		controlStrings = append(controlStrings, controlString)
 	}
-	sort.Ints(keyLengths)
-	maxKeyLength := keyLengths[len(keyLengths)-1]
-
-	drawText(s, offsetX, offsetY, screenWidth-1, offsetY+1, defaultStyle, "Controls:")
-	for i, c := range controls {
-		y1 := offsetY + i + 1
-		y2 := offsetY + i + 2
-		if y1 < screenHeight {
-			drawText(s, offsetX, y1, offsetX+maxKeyLength, y2, defaultStyle, c.key)
-			drawText(s, offsetX+maxKeyLength+2, y1, screenWidth-1, y2, defaultStyle, c.description)
-		}
-	}
+	controlsString := strings.Join(controlStrings, " • ")
+	return controlsString
 }
 
-func drawText(s tcell.Screen, x1, y1, x2, y2 int, style tcell.Style, text string) {
-	row := y1
-	col := x1
-	for _, r := range []rune(text) {
-		s.SetContent(col, row, r, nil, style)
-		col++
-		if col >= x2 || r == '\n' {
-			row++
-			col = x1
-		}
-		if row > y2 {
-			break
-		}
-	}
-}
+func createGrid(m model, selectedPoints []vector2d) string {
+	var stringBuilder strings.Builder
+	for y, row := range m.grid {
+		for x, symbol := range row {
+			point := vector2d{x: x, y: y}
 
-func drawGrid(s tcell.Screen, g grid, selectedPoints []vector2d) {
-	for i, row := range g {
-		for j, symbol := range row {
-			isSelected := false
-			for _, selectedPoint := range selectedPoints {
-				if i == selectedPoint.y && j == selectedPoint.x {
-					isSelected = true
-					break
-				}
-			}
-
-			var style tcell.Style
-			if isSelected {
+			var style lipgloss.Style
+			if slices.Contains(selectedPoints, point) {
 				style = symbolHighlightedColors[symbol]
 			} else {
 				style = symbolColors[symbol]
 			}
 
-			s.SetContent(j*2, i, symbol, nil, style)
+			stringBuilder.WriteString(style.Render(string(symbol)))
+
+			if x != len(row)-1 {
+				stringBuilder.WriteString(" ")
+			}
+		}
+
+		if y != len(m.grid)-1 {
+			stringBuilder.WriteString("\n")
 		}
 	}
+	gridString := stringBuilder.String()
+
+	controls := []control{{key: "any key", description: "skip"}}
+	controlsString := controlsToString(controls)
+
+	scoreString := fmt.Sprintf("Score: %s", humanize.Comma(int64(m.score)))
+
+	var remainingMovesString string
+	if m.options.gameType == LimitedMoves {
+		remainingMovesString = fmt.Sprintf("Remaining moves: %d", m.remainingMoveCount)
+	} else {
+		remainingMovesString = ""
+	}
+
+	return lipgloss.JoinVertical(lipgloss.Left, gridString, controlsString, scoreString, remainingMovesString)
 }
 
-func drawGameOverScreen(s tcell.Screen, g grid, score int) {
+func createGameOverView() string {
 	const text = "Game over!\n\nNo more moves left."
 	controls := []control{{key: "<Any key>", description: "Exit"}}
-
-	draw(s, g, []vector2d{}, text, controls, score)
+	controlsString := controlsToString(controls)
+	return lipgloss.JoinVertical(lipgloss.Left, text, controlsString)
 }
 
-func drawQuitConfirmationScreen(s tcell.Screen, g grid, score int) {
+func createQuitConfirmationView() string {
 	const text = "Are you sure you want to quit?\n\nAny game progress will be lost."
 	controls := []control{
-		{key: "Enter", description: "Quit"},
-		{key: "<Any other key>", description: "Cancel"},
+		{key: "enter", description: "quit"},
+		{key: "any other key", description: "cancel"},
 	}
+	controlsString := controlsToString(controls)
 
-	draw(s, g, []vector2d{}, text, controls, score)
-}
-
-func updateQuitConfirmationScreen(s tcell.Screen) {
-	for {
-		ev := s.PollEvent()
-		switch ev := ev.(type) {
-		case *tcell.EventKey:
-			if ev.Key() == tcell.KeyEnter {
-				quit(s)
-			}
-			return
-		}
-	}
+	return lipgloss.JoinVertical(lipgloss.Left, text, controlsString)
 }

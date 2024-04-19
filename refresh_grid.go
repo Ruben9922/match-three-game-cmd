@@ -1,42 +1,12 @@
 package main
 
 import (
-	"github.com/gdamore/tcell"
 	"math/rand"
 	"sort"
-	"time"
 )
 
 // todo: do initial refresh without animation and scoring
-func refreshGrid(s tcell.Screen, g *grid, r *rand.Rand, score *int, isScoring bool) {
-	ticker := time.NewTicker(150 * time.Millisecond)
-	skipped := false
-	skippedChannel := make(chan bool)
-
-	go func() {
-		for {
-			ev := s.PollEvent()
-			switch ev.(type) {
-			case *tcell.EventKey:
-				skippedChannel <- true
-			}
-		}
-	}()
-
-	waitForKeyPressOrTimeout := func() {
-		if !skipped {
-			select {
-			case skipped = <-skippedChannel:
-				ticker.Stop()
-			case <-ticker.C:
-			}
-		}
-	}
-
-	const text = "Refreshing grid..."
-	controls := []control{{key: "<Any key>", description: "Skip"}}
-	draw(s, *g, []vector2d{}, text, controls, *score)
-
+func refreshGrid(g *grid, r *rand.Rand, score *int, isScoring bool) {
 	for {
 		matches := findMatches(*g)
 		if len(matches) == 0 {
@@ -58,9 +28,6 @@ func refreshGrid(s tcell.Screen, g *grid, r *rand.Rand, score *int, isScoring bo
 			g[p.y][p.x] = emptySymbol
 		}
 
-		waitForKeyPressOrTimeout()
-		draw(s, *g, []vector2d{}, text, controls, *score)
-
 		// Shift symbols down and insert random symbol at top of column
 		// Instead of manually updating points list, could maybe just search through grid for empty points
 		// Assumes points are unique - duplicate points will cause strange behaviour
@@ -68,9 +35,6 @@ func refreshGrid(s tcell.Screen, g *grid, r *rand.Rand, score *int, isScoring bo
 		sortPoints(points)
 		for len(points) > 0 {
 			shiftPoint(g, &points, r)
-
-			waitForKeyPressOrTimeout()
-			draw(s, *g, []vector2d{}, text, controls, *score)
 		}
 	}
 }
