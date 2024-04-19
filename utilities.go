@@ -1,7 +1,6 @@
 package main
 
 import (
-	"github.com/gdamore/tcell"
 	"math/rand"
 )
 
@@ -19,14 +18,4 @@ func max(x, y int) int {
 		return x
 	}
 	return y
-}
-
-func waitForKeyPress(s tcell.Screen) {
-	for {
-		ev := s.PollEvent()
-		switch ev.(type) {
-		case *tcell.EventKey:
-			return
-		}
-	}
 }

@@ -132,13 +132,9 @@ func initialModel(r *rand.Rand) model {
 
 //type tickMsg time.Time
 
-//func mainold() {
 // TODO: Add different game modes - e.g. endless, timed, limited number of moves
 // TODO: Check resizing
-// TODO: Reorder code
-
 // todo: fix having to press twice
-//}
 
 func toggleGameType(gt gameType) gameType {
 	if gt == Endless {
@@ -298,11 +294,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 			}
 
-			// todo: fix initial extra key press
-			// swapped := swapPoints(s, &g, potentialMatch, score)
-
-			//refreshGrid(&m.grid, m.rand, &m.score, true)
-
 			if m.options.gameType != LimitedMoves || m.remainingMoveCount > 0 {
 				m.view = SelectFirstPointView
 				m.point1 = vector2d{x: gridWidth / 2, y: gridHeight / 2} // Initialise point 1 to centre of grid
@@ -319,9 +310,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, tea.Quit
 			}
 			m.view = m.previousView
-			//default:
-			//	m.previousView = m.view
-			//	m.view = QuitConfirmationView
 		}
 		//case tickMsg:
 		//return m, tickCmd()

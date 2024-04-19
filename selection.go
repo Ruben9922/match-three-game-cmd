@@ -6,23 +6,6 @@ import (
 	"github.com/dustin/go-humanize/english"
 )
 
-//func swapPoints(s tcell.Screen, g *grid, potentialMatch []vector2d, score int) bool {
-//	point1 := vector2d{x: gridWidth / 2, y: gridHeight / 2} // Initialise point 1 to centre of grid
-//	point2 := emptyVector2d
-//	for point2 == emptyVector2d {
-//		point1 = selectFirstPoint(s, *g, potentialMatch, point1, score)
-//		point2 = selectSecondPoint(s, *g, point1, score)
-//	}
-//
-//	if len(matches) != 0 {
-//	} else {
-//	}
-//
-//	waitForKeyPress(s)
-//
-//	return len(matches) != 0
-//}
-
 func createSelectFirstPointView(m model) string {
 	const text = "Select two points to swap (selecting point 1)..."
 	controls := []control{
