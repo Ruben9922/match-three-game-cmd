@@ -156,9 +156,6 @@ func createGrid(m model, selectedPoints []vector2d) string {
 	}
 	gridString := stringBuilder.String()
 
-	controls := []control{{key: "any key", description: "skip"}}
-	controlsString := controlsToString(controls)
-
 	scoreString := fmt.Sprintf("Score: %s", humanize.Comma(int64(m.score)))
 
 	var remainingMovesString string
@@ -168,7 +165,7 @@ func createGrid(m model, selectedPoints []vector2d) string {
 		remainingMovesString = ""
 	}
 
-	return lipgloss.JoinVertical(lipgloss.Left, gridString, controlsString, scoreString, remainingMovesString)
+	return lipgloss.JoinVertical(lipgloss.Left, gridString, scoreString, remainingMovesString)
 }
 
 func createGameOverView() string {
