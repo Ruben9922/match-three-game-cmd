@@ -178,6 +178,12 @@ func getInitialPoint2(point1 vector2d) vector2d {
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
+		if m.view != TitleView && m.view != QuitConfirmationView && msg.String() == "q" {
+			m.previousView = m.view
+			m.view = QuitConfirmationView
+			return m, nil
+		}
+
 		switch m.view {
 		case TitleView:
 			if msg.String() == "t" {
