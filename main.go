@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"math/rand"
@@ -87,18 +88,6 @@ var symbolHighlightedColors = map[rune]lipgloss.Style{
 	symbols[5]: lipgloss.NewStyle().Background(lipgloss.Color("11")),
 }
 
-type view int
-
-const (
-	TitleView view = iota
-	SelectFirstPointView
-	SelectSecondPointView
-	SelectPointConfirmationView
-	//RefreshGridView
-	QuitConfirmationView
-	GameOverView
-)
-
 type model struct {
 	rand               *rand.Rand
 	grid               grid
@@ -121,7 +110,7 @@ func initialModel(r *rand.Rand) model {
 		score:              0,
 		options:            options{gameType: Endless},
 		remainingMoveCount: moveLimit,
-		view:               TitleView,
+		view:               titleView{},
 		point1:             emptyVector2d,
 		point2:             emptyVector2d,
 		//animationQueue:      make([]grid, 0),
@@ -130,11 +119,23 @@ func initialModel(r *rand.Rand) model {
 	}
 }
 
+type sharedKeyMap struct {
+	Quit key.Binding
+}
+
+var sharedKeys = sharedKeyMap{
+	Quit: key.NewBinding(
+		key.WithKeys("q"),
+		key.WithHelp("q", "quit"),
+	),
+}
+
 //type tickMsg time.Time
 
 // TODO: Add different game modes - e.g. endless, timed, limited number of moves
 // TODO: Check resizing
 // todo: fix having to press twice
+// todo: change esc key to different key (?)
 
 func toggleGameType(gt gameType) gameType {
 	if gt == Endless {
@@ -178,145 +179,17 @@ func getInitialPoint2(point1 vector2d) vector2d {
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
-		if m.view != TitleView && m.view != QuitConfirmationView && msg.String() == "q" {
-			m.previousView = m.view
-			m.view = QuitConfirmationView
-			return m, nil
+		switch m.view.(type) {
+		case titleView, selectFirstPointView, selectSecondPointView, selectPointConfirmationView:
+			if key.Matches(msg, sharedKeys.Quit) {
+				m.previousView = m.view
+				m.view = quitConfirmationView{}
+				return m, nil
+			}
 		}
 
-		switch m.view {
-		case TitleView:
-			if msg.String() == "t" {
-				m.options.gameType = toggleGameType(m.options.gameType)
-			} else {
-				//m.view = RefreshGridView
-				refreshGrid(&m.grid, m.rand, &m.score, false)
+		return m.view.update(msg, m)
 
-				// todo: make this code not duplicated
-				m.potentialMatch = make([]vector2d, 0)
-				for len(m.potentialMatch) == 0 {
-					// Check if there are any possible matches; if no possible matches then create a new grid
-					m.potentialMatch = findPotentialMatch(m.grid)
-					if len(m.potentialMatch) == 0 {
-						m.grid = newGrid(m.rand)
-						refreshGrid(&m.grid, m.rand, &m.score, true)
-					}
-				}
-
-				m.view = SelectFirstPointView
-				m.point1 = vector2d{x: gridWidth / 2, y: gridHeight / 2} // Initialise point 1 to centre of grid
-				m.point2 = emptyVector2d
-
-				//return m, tickCmd()
-			}
-		case SelectFirstPointView:
-			if msg.String() == "enter" {
-				m.view = SelectSecondPointView
-				m.point2 = getInitialPoint2(m.point1)
-				return m, nil
-			}
-			switch msg.String() {
-			case "up", "w":
-				m.point1.y--
-				m.point1.y = (m.point1.y + gridHeight) % gridHeight // Clamp y coordinate between 0 and gridHeight - 1
-			case "down", "s":
-				m.point1.y++
-				m.point1.y = (m.point1.y + gridHeight) % gridHeight // Clamp y coordinate between 0 and gridHeight - 1
-			case "left", "a":
-				m.point1.x--
-				m.point1.x = (m.point1.x + gridWidth) % gridWidth // Clamp x coordinate between 0 and gridWidth - 1
-			case "right", "d":
-				m.point1.x++
-				m.point1.x = (m.point1.x + gridWidth) % gridWidth // Clamp x coordinate between 0 and gridWidth - 1
-			}
-
-			m.showHint = !m.showHint && msg.String() == "h"
-		case SelectSecondPointView:
-			if msg.String() == "enter" {
-				// Swap the points, if it would result in a match
-				updatedGrid := m.grid
-				updatedGrid[m.point1.y][m.point1.x], updatedGrid[m.point2.y][m.point2.x] =
-					updatedGrid[m.point2.y][m.point2.x], updatedGrid[m.point1.y][m.point1.x]
-				matches := findMatches(updatedGrid)
-				if len(matches) != 0 {
-					m.grid = updatedGrid
-
-					if m.options.gameType == LimitedMoves {
-						m.remainingMoveCount--
-					}
-				}
-
-				m.view = SelectPointConfirmationView
-				return m, nil
-			}
-
-			if msg.String() == "escape" {
-				m.view = SelectFirstPointView
-				m.point1 = vector2d{x: gridWidth / 2, y: gridHeight / 2} // Initialise point 1 to centre of grid
-				m.point2 = emptyVector2d
-				return m, nil
-			}
-
-			var point2Updated vector2d
-			switch msg.String() {
-			case "up", "w":
-				point2Updated = vector2d{
-					x: m.point1.x,
-					y: m.point1.y - 1,
-				}
-			case "down", "s":
-				point2Updated = vector2d{
-					x: m.point1.x,
-					y: m.point1.y + 1,
-				}
-			case "left", "a":
-				point2Updated = vector2d{
-					x: m.point1.x - 1,
-					y: m.point1.y,
-				}
-			case "right", "d":
-				point2Updated = vector2d{
-					x: m.point1.x + 1,
-					y: m.point1.y,
-				}
-			}
-			if isPointInsideGrid(point2Updated) {
-				m.point2 = point2Updated
-			}
-		case SelectPointConfirmationView:
-			// Refresh grid
-			//m.view = RefreshGridView
-
-			refreshGrid(&m.grid, m.rand, &m.score, true)
-
-			// todo: use nil everywhere instead of empty slice
-			m.potentialMatch = make([]vector2d, 0)
-			for len(m.potentialMatch) == 0 {
-				// Check if there are any possible matches; if no possible matches then create a new grid
-				m.potentialMatch = findPotentialMatch(m.grid)
-				if len(m.potentialMatch) == 0 {
-					m.grid = newGrid(m.rand)
-					refreshGrid(&m.grid, m.rand, &m.score, true)
-				}
-			}
-
-			if m.options.gameType != LimitedMoves || m.remainingMoveCount > 0 {
-				m.view = SelectFirstPointView
-				m.point1 = vector2d{x: gridWidth / 2, y: gridHeight / 2} // Initialise point 1 to centre of grid
-				m.point2 = emptyVector2d
-			} else {
-				m.view = GameOverView
-				m.point1 = emptyVector2d
-				m.point2 = emptyVector2d
-			}
-		case GameOverView:
-			return m, tea.Quit
-		case QuitConfirmationView:
-			if msg.String() == "enter" {
-				return m, tea.Quit
-			}
-			m.view = m.previousView
-		}
 		//case tickMsg:
 		//return m, tickCmd()
 	}
@@ -325,24 +198,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m model) View() string {
-	switch m.view {
-	case TitleView:
-		return createTitleView(m)
-	case SelectFirstPointView:
-		return createSelectFirstPointView(m)
-	case SelectSecondPointView:
-		return createSelectSecondPointView(m)
-	case SelectPointConfirmationView:
-		return createSelectPointConfirmationView(m)
-	//case RefreshGridView:
-	//	return createGridView(m)
-	case QuitConfirmationView:
-		return createQuitConfirmationView()
-	case GameOverView:
-		return createGameOverView()
-	default:
-		return ""
-	}
+	return m.view.draw(m)
 }
 
 func main() {
