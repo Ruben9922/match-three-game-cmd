@@ -19,6 +19,7 @@ type selectFirstPointViewKeyMap struct {
 type selectFirstPointView struct{}
 
 var selectFirstPointViewKeys = selectFirstPointViewKeyMap{
+	sharedKeyMap: sharedKeys,
 	Select: key.NewBinding(
 		key.WithKeys("enter"),
 		key.WithHelp("↵", "select"),
@@ -45,13 +46,30 @@ var selectFirstPointViewKeys = selectFirstPointViewKeyMap{
 	),
 }
 
-func (s selectFirstPointView) update(msg tea.KeyMsg, m model) (model, tea.Cmd) {
-	if key.Matches(msg, selectFirstPointViewKeys.Select) {
+func (k selectFirstPointViewKeyMap) ShortHelp() []key.Binding {
+	return []key.Binding{k.Help, k.Quit}
+}
+
+func (k selectFirstPointViewKeyMap) FullHelp() [][]key.Binding {
+	return [][]key.Binding{
+		{k.Up, k.Down, k.Left, k.Right},
+		{k.Select, k.ToggleHint},
+		{k.Help, k.Quit},
+	}
+}
+
+func (s selectFirstPointView) update(msg tea.KeyMsg, m model) (tea.Model, tea.Cmd) {
+	switch {
+	case key.Matches(msg, selectFirstPointViewKeys.Quit):
+		return showQuitConfirmationView(m)
+	case key.Matches(msg, selectFirstPointViewKeys.Help):
+		return toggleHelp(m)
+
+	case key.Matches(msg, selectFirstPointViewKeys.Select):
 		m.view = selectSecondPointView{}
 		m.point2 = getInitialPoint2(m.point1)
 		return m, nil
-	}
-	switch {
+
 	case key.Matches(msg, selectFirstPointViewKeys.Up):
 		m.point1.y--
 		m.point1.y = (m.point1.y + gridHeight) % gridHeight // Clamp y coordinate between 0 and gridHeight - 1
@@ -72,26 +90,17 @@ func (s selectFirstPointView) update(msg tea.KeyMsg, m model) (model, tea.Cmd) {
 
 func (s selectFirstPointView) draw(m model) string {
 	const text = "Select two points to swap (selecting point 1)..."
-	controls := []control{
-		{key: "← ↑ → ↓ / WASD", description: "Move selection"},
-		{key: "Enter", description: "Select"},
-		{key: "H", description: "Show hint"},
-		{key: "Q", description: "End Game"},
-	}
-	hintControls := []control{
-		{key: "<Any key>", description: "Hide hint"},
-	}
-
-	var controlsString string
+	//var controlsString string
 	var selectedPoints []vector2d
 	if m.showHint {
-		controlsString = controlsToString(hintControls)
+		//controlsString = controlsToString(hintControls)
 		selectedPoints = m.potentialMatch
 	} else {
-		controlsString = controlsToString(controls)
+		//controlsString = controlsToString(controls)
 		selectedPoints = []vector2d{m.point1}
 	}
-	selectFirstPointText := lipgloss.JoinVertical(lipgloss.Left, text, controlsString)
+	helpView := m.help.View(selectFirstPointViewKeys)
+	selectFirstPointText := lipgloss.JoinVertical(lipgloss.Left, text, helpView)
 
 	gridText := createGrid(m, selectedPoints)
 

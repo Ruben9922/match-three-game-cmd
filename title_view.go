@@ -9,9 +9,21 @@ import (
 type titleView struct{}
 
 type titleViewKeyMap struct {
-	sharedKeyMap
+	Quit           key.Binding
 	ToggleGameType key.Binding
 	Start          key.Binding
+}
+
+var titleViewKeys = titleViewKeyMap{
+	Quit: sharedKeys.Quit,
+	ToggleGameType: key.NewBinding(
+		key.WithKeys("t"),
+		key.WithHelp("t", "change game type"),
+	),
+	Start: key.NewBinding(
+		key.WithKeys("enter"),
+		key.WithHelp("↵", "start"),
+	),
 }
 
 func (k titleViewKeyMap) ShortHelp() []key.Binding {
@@ -19,18 +31,9 @@ func (k titleViewKeyMap) ShortHelp() []key.Binding {
 }
 
 func (k titleViewKeyMap) FullHelp() [][]key.Binding {
-	return [][]key.Binding{k.ShortHelp()}
-}
-
-var titleViewKeys = titleViewKeyMap{
-	ToggleGameType: key.NewBinding(
-		key.WithKeys("t"),
-		key.WithHelp("t", "change game type"),
-	),
-	Start: key.NewBinding(
-		key.WithKeys("enter"),
-		key.WithHelp("enter", "start"),
-	),
+	return [][]key.Binding{
+		{k.Start, k.ToggleGameType, k.Quit},
+	}
 }
 
 func (tv titleView) draw(m model) string {
@@ -39,15 +42,15 @@ func (tv titleView) draw(m model) string {
 	const text = "\n Press any key to start..."
 
 	radioButtons := drawRadioButtons([]gameType{Endless, LimitedMoves}, m.options.gameType, "Game type", "T")
-
-	titleView := lipgloss.JoinVertical(lipgloss.Left, titlePart1, titlePart2, text, radioButtons)
-
-	// todo: controls view
-	return lipgloss.JoinVertical(lipgloss.Left, titleView, "")
+	helpView := m.help.View(titleViewKeys)
+	return lipgloss.JoinVertical(lipgloss.Left, titlePart1, titlePart2, text, radioButtons, "", helpView)
 }
 
-func (tv titleView) update(msg tea.KeyMsg, m model) (model, tea.Cmd) {
+func (tv titleView) update(msg tea.KeyMsg, m model) (tea.Model, tea.Cmd) {
 	switch {
+	case key.Matches(msg, titleViewKeys.Quit):
+		return showQuitConfirmationView(m)
+
 	case key.Matches(msg, titleViewKeys.ToggleGameType):
 		m.options.gameType = toggleGameType(m.options.gameType)
 	case key.Matches(msg, titleViewKeys.Start):

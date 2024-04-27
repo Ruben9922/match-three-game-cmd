@@ -35,16 +35,6 @@ func drawRadioButtons[T radioButtonItem](options []T, selected T, label string, 
 	return builder.String()
 }
 
-func controlsToString(controls []control) string {
-	controlStrings := make([]string, 0, len(controls))
-	for _, c := range controls {
-		controlString := fmt.Sprintf("%s: %s", c.key, c.description)
-		controlStrings = append(controlStrings, controlString)
-	}
-	controlsString := strings.Join(controlStrings, " • ")
-	return controlsString
-}
-
 func createGrid(m model, selectedPoints []vector2d) string {
 	var stringBuilder strings.Builder
 	for y, row := range m.grid {

@@ -9,20 +9,36 @@ import (
 )
 
 type selectPointConfirmationViewKeyMap struct {
-	sharedKeyMap
-	Select key.Binding
+	Quit    key.Binding
+	Confirm key.Binding
 }
 
 var selectPointConfirmationViewKeys = selectPointConfirmationViewKeyMap{
-	Select: key.NewBinding(
+	Quit: sharedKeys.Quit,
+	Confirm: key.NewBinding(
 		key.WithKeys("enter"),
 		key.WithHelp("↵", "continue"),
 	),
 }
 
+func (s selectPointConfirmationViewKeyMap) ShortHelp() []key.Binding {
+	return []key.Binding{s.Confirm, s.Quit}
+}
+
+func (s selectPointConfirmationViewKeyMap) FullHelp() [][]key.Binding {
+	return [][]key.Binding{
+		{s.Confirm, s.Quit},
+	}
+}
+
 type selectPointConfirmationView struct{}
 
-func (s selectPointConfirmationView) update(msg tea.KeyMsg, m model) (model, tea.Cmd) {
+func (s selectPointConfirmationView) update(msg tea.KeyMsg, m model) (tea.Model, tea.Cmd) {
+	switch {
+	case key.Matches(msg, selectPointConfirmationViewKeys.Quit):
+		return showQuitConfirmationView(m)
+	}
+
 	// Refresh grid
 	//m.view = RefreshGridView
 
@@ -53,9 +69,6 @@ func (s selectPointConfirmationView) update(msg tea.KeyMsg, m model) (model, tea
 }
 
 func (s selectPointConfirmationView) draw(m model) string {
-	controls := []control{{key: "<Any key>", description: "Continue"}}
-	controlsString := controlsToString(controls)
-
 	matches := findMatches(m.grid)
 	var text string
 	var selectedPoints []vector2d
@@ -68,7 +81,8 @@ func (s selectPointConfirmationView) draw(m model) string {
 		text = "Not swapping as swap would not result in a match; please try again"
 		selectedPoints = []vector2d{m.point1, m.point2}
 	}
-	selectPointConfirmationText := lipgloss.JoinVertical(lipgloss.Left, text, controlsString)
+	helpView := m.help.View(selectPointConfirmationViewKeys)
+	selectPointConfirmationText := lipgloss.JoinVertical(lipgloss.Left, text, helpView)
 
 	gridText := createGrid(m, selectedPoints)
 

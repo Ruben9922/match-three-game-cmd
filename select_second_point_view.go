@@ -17,6 +17,7 @@ type selectSecondPointViewKeyMap struct {
 }
 
 var selectSecondPointViewKeys = selectSecondPointViewKeyMap{
+	sharedKeyMap: sharedKeys,
 	Select: key.NewBinding(
 		key.WithKeys("enter"),
 		key.WithHelp("↵", "select"),
@@ -43,10 +44,28 @@ var selectSecondPointViewKeys = selectSecondPointViewKeyMap{
 	),
 }
 
+func (s selectSecondPointViewKeyMap) ShortHelp() []key.Binding {
+	return []key.Binding{s.Help, s.Quit}
+}
+
+func (s selectSecondPointViewKeyMap) FullHelp() [][]key.Binding {
+	return [][]key.Binding{
+		{s.Up, s.Down, s.Left, s.Right},
+		{s.Select, s.Cancel},
+		{s.Help, s.Quit},
+	}
+}
+
 type selectSecondPointView struct{}
 
-func (s selectSecondPointView) update(msg tea.KeyMsg, m model) (model, tea.Cmd) {
-	if key.Matches(msg, selectSecondPointViewKeys.Select) {
+func (s selectSecondPointView) update(msg tea.KeyMsg, m model) (tea.Model, tea.Cmd) {
+	switch {
+	case key.Matches(msg, selectSecondPointViewKeys.Quit):
+		return showQuitConfirmationView(m)
+	case key.Matches(msg, selectSecondPointViewKeys.Help):
+		return toggleHelp(m)
+
+	case key.Matches(msg, selectSecondPointViewKeys.Select):
 		// Swap the points, if it would result in a match
 		updatedGrid := m.grid
 		updatedGrid[m.point1.y][m.point1.x], updatedGrid[m.point2.y][m.point2.x] =
@@ -62,9 +81,8 @@ func (s selectSecondPointView) update(msg tea.KeyMsg, m model) (model, tea.Cmd) 
 
 		m.view = selectPointConfirmationView{}
 		return m, nil
-	}
 
-	if key.Matches(msg, selectSecondPointViewKeys.Cancel) {
+	case key.Matches(msg, selectSecondPointViewKeys.Cancel):
 		m.view = selectFirstPointView{}
 		m.point1 = vector2d{x: gridWidth / 2, y: gridHeight / 2} // Initialise point 1 to centre of grid
 		m.point2 = emptyVector2d
@@ -103,14 +121,8 @@ func (s selectSecondPointView) update(msg tea.KeyMsg, m model) (model, tea.Cmd) 
 
 func (s selectSecondPointView) draw(m model) string {
 	const text = "Select two points to swap (selecting point 2)..."
-	controls := []control{
-		{key: "← ↑ → ↓ / WASD", description: "Move selection"},
-		{key: "Enter", description: "Select"},
-		{key: "Escape", description: "Cancel selection"},
-		{key: "Q", description: "End Game"},
-	}
-	controlsString := controlsToString(controls)
-	selectSecondPointText := lipgloss.JoinVertical(lipgloss.Left, text, controlsString)
+	helpView := m.help.View(selectSecondPointViewKeys)
+	selectSecondPointText := lipgloss.JoinVertical(lipgloss.Left, text, helpView)
 
 	gridText := createGrid(m, []vector2d{m.point1, m.point2})
 

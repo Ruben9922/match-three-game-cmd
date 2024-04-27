@@ -22,9 +22,19 @@ var quitConfirmationViewKeys = quitConfirmationViewKeyMap{
 	),
 }
 
+func (q quitConfirmationViewKeyMap) ShortHelp() []key.Binding {
+	return []key.Binding{q.Quit, q.Cancel}
+}
+
+func (q quitConfirmationViewKeyMap) FullHelp() [][]key.Binding {
+	return [][]key.Binding{
+		{q.Quit, q.Cancel},
+	}
+}
+
 type quitConfirmationView struct{}
 
-func (q quitConfirmationView) update(msg tea.KeyMsg, m model) (model, tea.Cmd) {
+func (q quitConfirmationView) update(msg tea.KeyMsg, m model) (tea.Model, tea.Cmd) {
 	switch {
 	case key.Matches(msg, quitConfirmationViewKeys.Quit):
 		return m, tea.Quit
@@ -38,11 +48,6 @@ func (q quitConfirmationView) update(msg tea.KeyMsg, m model) (model, tea.Cmd) {
 
 func (q quitConfirmationView) draw(m model) string {
 	const text = "Are you sure you want to quit?\n\nAny game progress will be lost."
-	controls := []control{
-		{key: "enter", description: "quit"},
-		{key: "any other key", description: "cancel"},
-	}
-	controlsString := controlsToString(controls)
-
-	return lipgloss.JoinVertical(lipgloss.Left, text, controlsString)
+	helpView := m.help.View(quitConfirmationViewKeys)
+	return lipgloss.JoinVertical(lipgloss.Left, text, helpView)
 }
