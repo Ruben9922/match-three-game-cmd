@@ -111,6 +111,8 @@ func (s selectSecondPointView) update(msg tea.KeyMsg, m model) (tea.Model, tea.C
 			x: m.point1.x + 1,
 			y: m.point1.y,
 		}
+	default:
+		return m, nil
 	}
 	if isPointInsideGrid(point2Updated) {
 		m.point2 = point2Updated

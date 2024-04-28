@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -16,8 +17,6 @@ type selectFirstPointViewKeyMap struct {
 	Right      key.Binding
 }
 
-type selectFirstPointView struct{}
-
 var selectFirstPointViewKeys = selectFirstPointViewKeyMap{
 	sharedKeyMap: sharedKeys,
 	Select: key.NewBinding(
@@ -26,7 +25,7 @@ var selectFirstPointViewKeys = selectFirstPointViewKeyMap{
 	),
 	ToggleHint: key.NewBinding(
 		key.WithKeys("h"),
-		key.WithHelp("h", "show/hide hint"),
+		key.WithHelp("h", "show hint"),
 	),
 	Up: key.NewBinding(
 		key.WithKeys("up", "w"),
@@ -58,17 +57,54 @@ func (k selectFirstPointViewKeyMap) FullHelp() [][]key.Binding {
 	}
 }
 
+type selectFirstPointViewHintKeyMap struct {
+	Quit       key.Binding
+	ToggleHint key.Binding
+}
+
+var selectFirstPointViewHintKeys = selectFirstPointViewHintKeyMap{
+	Quit: sharedKeys.Quit,
+	ToggleHint: key.NewBinding(
+		key.WithKeys("h"),
+		key.WithHelp("h", "hide hint"),
+	),
+}
+
+func (k selectFirstPointViewHintKeyMap) ShortHelp() []key.Binding {
+	return []key.Binding{k.ToggleHint, k.Quit}
+}
+
+func (k selectFirstPointViewHintKeyMap) FullHelp() [][]key.Binding {
+	return [][]key.Binding{
+		{k.ToggleHint, k.Quit},
+	}
+}
+
+type selectFirstPointView struct{}
+
 func (s selectFirstPointView) update(msg tea.KeyMsg, m model) (tea.Model, tea.Cmd) {
+	if m.showHint {
+		switch {
+		case key.Matches(msg, selectFirstPointViewHintKeys.Quit):
+			return showQuitConfirmationView(m)
+		case key.Matches(msg, selectFirstPointViewHintKeys.ToggleHint):
+			m.showHint = false
+		}
+		return m, nil
+	}
+
 	switch {
 	case key.Matches(msg, selectFirstPointViewKeys.Quit):
 		return showQuitConfirmationView(m)
 	case key.Matches(msg, selectFirstPointViewKeys.Help):
 		return toggleHelp(m)
 
+	case key.Matches(msg, selectFirstPointViewKeys.ToggleHint):
+		m.showHint = true
+
 	case key.Matches(msg, selectFirstPointViewKeys.Select):
 		m.view = selectSecondPointView{}
 		m.point2 = getInitialPoint2(m.point1)
-		return m, nil
 
 	case key.Matches(msg, selectFirstPointViewKeys.Up):
 		m.point1.y--
@@ -83,25 +119,26 @@ func (s selectFirstPointView) update(msg tea.KeyMsg, m model) (tea.Model, tea.Cm
 		m.point1.x++
 		m.point1.x = (m.point1.x + gridWidth) % gridWidth // Clamp x coordinate between 0 and gridWidth - 1
 	}
-
-	m.showHint = !m.showHint && key.Matches(msg, selectFirstPointViewKeys.ToggleHint)
 	return m, nil
 }
 
 func (s selectFirstPointView) draw(m model) string {
 	const text = "Select two points to swap (selecting point 1)..."
-	//var controlsString string
-	var selectedPoints []vector2d
+	var keys help.KeyMap
 	if m.showHint {
-		//controlsString = controlsToString(hintControls)
-		selectedPoints = m.potentialMatch
+		keys = selectFirstPointViewHintKeys
 	} else {
-		//controlsString = controlsToString(controls)
-		selectedPoints = []vector2d{m.point1}
+		keys = selectFirstPointViewKeys
 	}
-	helpView := m.help.View(selectFirstPointViewKeys)
+	helpView := m.help.View(keys)
 	selectFirstPointText := lipgloss.JoinVertical(lipgloss.Left, text, "", helpView)
 
+	var selectedPoints []vector2d
+	if m.showHint {
+		selectedPoints = m.potentialMatch
+	} else {
+		selectedPoints = []vector2d{m.point1}
+	}
 	gridText := createGrid(m, selectedPoints)
 
 	return lipgloss.JoinHorizontal(
