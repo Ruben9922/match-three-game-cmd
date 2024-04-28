@@ -131,7 +131,7 @@ var sharedKeys = sharedKeyMap{
 		key.WithHelp("q", "quit"),
 	),
 	Help: key.NewBinding(
-		key.WithKeys("?"),
+		key.WithKeys("?", "/"), // Include "/" ("?" without pressing shift key) for convenience
 		key.WithHelp("?", "show/hide controls"),
 	),
 }
