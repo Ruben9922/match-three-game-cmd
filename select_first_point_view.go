@@ -122,6 +122,27 @@ func (s selectFirstPointView) update(msg tea.KeyMsg, m model) (tea.Model, tea.Cm
 	return m, nil
 }
 
+func getInitialPoint2(point1 vector2d) vector2d {
+	if point1.y == 0 {
+		if point1.x == gridWidth-1 {
+			return vector2d{
+				x: point1.x - 1,
+				y: point1.y,
+			}
+		} else {
+			return vector2d{
+				x: point1.x + 1,
+				y: point1.y,
+			}
+		}
+	} else {
+		return vector2d{
+			x: point1.x,
+			y: point1.y - 1,
+		}
+	}
+}
+
 func (s selectFirstPointView) draw(m model) string {
 	const text = "Select two points to swap (selecting point 1)..."
 	var keys help.KeyMap

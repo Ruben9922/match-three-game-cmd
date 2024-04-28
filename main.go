@@ -142,27 +142,6 @@ func (m model) Init() tea.Cmd {
 //	})
 //}
 
-func getInitialPoint2(point1 vector2d) vector2d {
-	if point1.y == 0 {
-		if point1.x == gridWidth-1 {
-			return vector2d{
-				x: point1.x - 1,
-				y: point1.y,
-			}
-		} else {
-			return vector2d{
-				x: point1.x + 1,
-				y: point1.y,
-			}
-		}
-	} else {
-		return vector2d{
-			x: point1.x,
-			y: point1.y - 1,
-		}
-	}
-}
-
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
