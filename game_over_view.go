@@ -40,5 +40,13 @@ func (g gameOverView) update(msg tea.KeyMsg, m model) (tea.Model, tea.Cmd) {
 func (g gameOverView) draw(m model) string {
 	const text = "Game over!\n\nNo more moves left."
 	helpView := m.help.View(gameOverViewKeys)
-	return lipgloss.JoinVertical(lipgloss.Left, text, "", helpView)
+	gameOverViewText := lipgloss.JoinVertical(lipgloss.Left, text, "", helpView)
+
+	gridText := createGrid(m, []vector2d{})
+
+	return lipgloss.JoinHorizontal(
+		lipgloss.Top,
+		gridText,
+		lipgloss.NewStyle().MarginLeft(3).Render(gameOverViewText),
+	)
 }
