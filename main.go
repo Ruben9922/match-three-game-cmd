@@ -84,6 +84,7 @@ var symbolHighlightedColors = map[rune]lipgloss.Style{
 	symbols[5]: lipgloss.NewStyle().Background(lipgloss.Color("11")),
 }
 
+var accentColor = lipgloss.Color("105")
 var highlightedStyle = lipgloss.NewStyle().Background(lipgloss.Color("15")).Foreground(lipgloss.Color("0"))
 
 type model struct {
@@ -208,7 +209,7 @@ func showQuitConfirmationView(m model) (tea.Model, tea.Cmd) {
 }
 
 func (m model) View() string {
-	return m.view.draw(m)
+	return lipgloss.NewStyle().Padding(2, 4).Render(m.view.draw(m))
 }
 
 func main() {

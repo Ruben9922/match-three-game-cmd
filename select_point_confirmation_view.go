@@ -73,18 +73,27 @@ func (s selectPointConfirmationView) draw(m model) string {
 	var text string
 	var selectedPoints []vector2d
 	if len(matches) != 0 {
-		text = fmt.Sprintf("Swapped %c (%d, %d) and %c (%d, %d); %s formed",
+		matchesScore := computeScore(matches)
+		swappedText := fmt.Sprintf("Swapped %c (%d, %d) and %c (%d, %d).",
 			m.grid[m.point1.y][m.point1.x], m.point1.x, m.point1.y, m.grid[m.point2.y][m.point2.x], m.point2.x,
-			m.point2.y, english.PluralWord(len(matches), "match", ""))
+			m.point2.y)
+		matchText := fmt.Sprintf("%s formed!", english.PluralWord(len(matches), "Match", ""))
+		pointsGainedText := fmt.Sprintf("+%d points!", matchesScore)
+		text = lipgloss.JoinVertical(lipgloss.Left, swappedText, "", matchText, pointsGainedText)
+
 		selectedPoints = convertMatchesToPoints(matches)
 	} else {
-		text = "Not swapping as swap would not result in a match; please try again"
+		text = "Not swapping as swap would not result in a match.\nPlease try again."
 		selectedPoints = []vector2d{m.point1, m.point2}
 	}
 	helpView := m.help.View(selectPointConfirmationViewKeys)
-	selectPointConfirmationText := lipgloss.JoinVertical(lipgloss.Left, text, helpView)
+	selectPointConfirmationText := lipgloss.JoinVertical(lipgloss.Left, text, "", helpView)
 
 	gridText := createGrid(m, selectedPoints)
 
-	return lipgloss.JoinHorizontal(lipgloss.Top, gridText, selectPointConfirmationText)
+	return lipgloss.JoinHorizontal(
+		lipgloss.Top,
+		gridText,
+		lipgloss.NewStyle().MarginLeft(3).Render(selectPointConfirmationText),
+	)
 }

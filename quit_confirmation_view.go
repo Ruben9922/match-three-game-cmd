@@ -49,5 +49,5 @@ func (q quitConfirmationView) update(msg tea.KeyMsg, m model) (tea.Model, tea.Cm
 func (q quitConfirmationView) draw(m model) string {
 	const text = "Are you sure you want to quit?\n\nAny game progress will be lost."
 	helpView := m.help.View(quitConfirmationViewKeys)
-	return lipgloss.JoinVertical(lipgloss.Left, text, helpView)
+	return lipgloss.JoinVertical(lipgloss.Left, text, "", helpView)
 }

@@ -122,9 +122,13 @@ func (s selectSecondPointView) update(msg tea.KeyMsg, m model) (tea.Model, tea.C
 func (s selectSecondPointView) draw(m model) string {
 	const text = "Select two points to swap (selecting point 2)..."
 	helpView := m.help.View(selectSecondPointViewKeys)
-	selectSecondPointText := lipgloss.JoinVertical(lipgloss.Left, text, helpView)
+	selectSecondPointText := lipgloss.JoinVertical(lipgloss.Left, text, "", helpView)
 
 	gridText := createGrid(m, []vector2d{m.point1, m.point2})
 
-	return lipgloss.JoinHorizontal(lipgloss.Top, gridText, selectSecondPointText)
+	return lipgloss.JoinHorizontal(
+		lipgloss.Top,
+		gridText,
+		lipgloss.NewStyle().MarginLeft(3).Render(selectSecondPointText),
+	)
 }

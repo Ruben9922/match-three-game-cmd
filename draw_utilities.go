@@ -57,7 +57,13 @@ func createGrid(m model, selectedPoints []vector2d) string {
 			stringBuilder.WriteString("\n")
 		}
 	}
-	gridString := stringBuilder.String()
+	border := lipgloss.RoundedBorder()
+	gridStyle := lipgloss.NewStyle().
+		BorderForeground(accentColor).
+		BorderStyle(border).
+		Padding(0, 1)
+
+	gridString := gridStyle.Render(stringBuilder.String())
 
 	scoreString := fmt.Sprintf("Score: %s", humanize.Comma(int64(m.score)))
 
@@ -68,5 +74,5 @@ func createGrid(m model, selectedPoints []vector2d) string {
 		remainingMovesString = ""
 	}
 
-	return lipgloss.JoinVertical(lipgloss.Left, gridString, scoreString, remainingMovesString)
+	return lipgloss.JoinVertical(lipgloss.Left, gridString, "", scoreString, remainingMovesString)
 }

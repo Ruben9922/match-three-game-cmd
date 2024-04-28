@@ -100,9 +100,13 @@ func (s selectFirstPointView) draw(m model) string {
 		selectedPoints = []vector2d{m.point1}
 	}
 	helpView := m.help.View(selectFirstPointViewKeys)
-	selectFirstPointText := lipgloss.JoinVertical(lipgloss.Left, text, helpView)
+	selectFirstPointText := lipgloss.JoinVertical(lipgloss.Left, text, "", helpView)
 
 	gridText := createGrid(m, selectedPoints)
 
-	return lipgloss.JoinHorizontal(lipgloss.Top, gridText, selectFirstPointText)
+	return lipgloss.JoinHorizontal(
+		lipgloss.Top,
+		gridText,
+		lipgloss.NewStyle().MarginLeft(3).Render(selectFirstPointText),
+	)
 }
