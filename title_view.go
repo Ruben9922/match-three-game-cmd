@@ -4,14 +4,16 @@ import (
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"slices"
 )
 
 type titleView struct{}
 
 type titleViewKeyMap struct {
-	Quit           key.Binding
-	ToggleGameType key.Binding
-	Start          key.Binding
+	Quit            key.Binding
+	ToggleGameType  key.Binding
+	ToggleSymbolSet key.Binding
+	Start           key.Binding
 }
 
 var titleViewKeys = titleViewKeyMap{
@@ -20,19 +22,26 @@ var titleViewKeys = titleViewKeyMap{
 		key.WithKeys("t"),
 		key.WithHelp("t", "change game type"),
 	),
+	ToggleSymbolSet: key.NewBinding(
+		key.WithKeys("s"),
+		key.WithHelp("s", "change symbol set"),
+	),
 	Start: key.NewBinding(
 		key.WithKeys("enter"),
 		key.WithHelp("↵", "start"),
 	),
 }
 
+var gameTypes = []gameType{Endless, LimitedMoves}
+var symbolSets = []symbolSet{newEmojiSymbolSet(), newShapeSymbolSet(), newLetterSymbolSet(), newNumberSymbolSet()}
+
 func (k titleViewKeyMap) ShortHelp() []key.Binding {
-	return []key.Binding{k.Start, k.ToggleGameType, k.Quit}
+	return []key.Binding{k.Start, k.ToggleGameType, k.ToggleSymbolSet, k.Quit}
 }
 
 func (k titleViewKeyMap) FullHelp() [][]key.Binding {
 	return [][]key.Binding{
-		{k.Start, k.ToggleGameType, k.Quit},
+		{k.Start, k.ToggleGameType, k.ToggleSymbolSet, k.Quit},
 	}
 }
 
@@ -41,9 +50,29 @@ func (tv titleView) draw(m model) string {
 	const titlePart2 = "   ____                      \n  / ___| __ _ _ __ ___   ___ \n | |  _ / _` | '_ ` _ \\ / _ \\\n | |_| | (_| | | | | | |  __/\n  \\____|\\__,_|_| |_| |_|\\___|"
 	const text = "Press enter key to start..."
 
-	radioButtons := drawRadioButtons([]gameType{Endless, LimitedMoves}, m.options.gameType, "Game type", "T")
+	gameTypeRadioButtons := drawRadioButtons(gameTypes, m.options.gameType, "Game type", "T")
+	symbolSetRadioButtons := drawRadioButtons(symbolSets, m.symbolSet, "Symbol set", "S")
 	helpView := m.help.View(titleViewKeys)
-	return lipgloss.JoinVertical(lipgloss.Center, titlePart1, titlePart2, "", text, "", radioButtons, "", helpView)
+	return lipgloss.JoinVertical(lipgloss.Center,
+		titlePart1,
+		titlePart2,
+		"",
+		text,
+		"",
+		gameTypeRadioButtons,
+		symbolSetRadioButtons,
+		"",
+		helpView,
+	)
+}
+
+func getNextElement[T comparable](slice []T, element T) T {
+	index := slices.Index(slice, element)
+	if index == -1 {
+		return slice[0]
+	}
+
+	return slice[(index+1)%len(slice)]
 }
 
 func (tv titleView) update(msg tea.KeyMsg, m model) (tea.Model, tea.Cmd) {
@@ -52,7 +81,9 @@ func (tv titleView) update(msg tea.KeyMsg, m model) (tea.Model, tea.Cmd) {
 		return showQuitConfirmationView(m)
 
 	case key.Matches(msg, titleViewKeys.ToggleGameType):
-		m.options.gameType = toggleGameType(m.options.gameType)
+		m.options.gameType = getNextElement(gameTypes, m.options.gameType)
+	case key.Matches(msg, titleViewKeys.ToggleSymbolSet):
+		m.symbolSet = getNextElement(symbolSets, m.symbolSet)
 	case key.Matches(msg, titleViewKeys.Start):
 		//m.view = RefreshGridView
 		refreshGrid(&m.grid, m.rand, &m.score, false)

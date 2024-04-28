@@ -76,8 +76,10 @@ func (s selectPointConfirmationView) draw(m model) string {
 	var selectedPoints []vector2d
 	if len(matches) != 0 {
 		matchesScore := computeScore(matches)
-		swappedText := fmt.Sprintf("Swapped %c (%d, %d) and %c (%d, %d).",
-			m.grid[m.point1.y][m.point1.x], m.point1.x, m.point1.y, m.grid[m.point2.y][m.point2.x], m.point2.x,
+		symbol1 := m.grid[m.point1.y][m.point1.x]
+		symbol2 := m.grid[m.point2.y][m.point2.x]
+		swappedText := fmt.Sprintf("Swapped %s (%d, %d) and %s (%d, %d).",
+			m.symbolSet.formatSymbol(symbol1), m.point1.x, m.point1.y, m.symbolSet.formatSymbol(symbol2), m.point2.x,
 			m.point2.y)
 		matchText := fmt.Sprintf("%s formed!", english.PluralWord(len(matches), "Match", ""))
 		pointsGainedText := fmt.Sprintf("+%d points!", matchesScore)

@@ -144,7 +144,7 @@ func shiftPoint(g *grid, points *[]vector2d, r *rand.Rand) {
 	for y := p.y; y > 0; y-- {
 		g[y][p.x] = g[y-1][p.x]
 	}
-	g[0][p.x] = getRandomSymbol(r)
+	g[0][p.x] = r.Intn(symbolCount)
 
 	// Shift down remaining points in same column to account for shifting of corresponding empty points in grid
 	// p1.y++ for each point p1 in this column (with same x)

@@ -39,14 +39,14 @@ func createGrid(m model, selectedPoints []vector2d) string {
 		for x, symbol := range row {
 			point := vector2d{x: x, y: y}
 
-			var style lipgloss.Style
+			var formattedSymbol string
 			if slices.Contains(selectedPoints, point) {
-				style = symbolHighlightedColors[symbol]
+				formattedSymbol = m.symbolSet.formatSymbolHighlighted(symbol)
 			} else {
-				style = symbolColors[symbol]
+				formattedSymbol = m.symbolSet.formatSymbol(symbol)
 			}
 
-			stringBuilder.WriteString(style.Render(string(symbol)))
+			stringBuilder.WriteString(formattedSymbol)
 
 			if x != len(row)-1 {
 				stringBuilder.WriteString(" ")

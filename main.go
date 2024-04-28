@@ -11,12 +11,14 @@ import (
 	"time"
 )
 
-type grid [gridHeight][gridWidth]rune
+const symbolCount = 6
+
+type grid [gridHeight][gridWidth]int
 
 func newGrid(r *rand.Rand) (g grid) {
 	for i := 0; i < gridHeight; i++ {
 		for j := 0; j < gridWidth; j++ {
-			g[i][j] = getRandomSymbol(r)
+			g[i][j] = r.Intn(symbolCount)
 		}
 	}
 	return
@@ -64,28 +66,12 @@ const minMatchLength int = 3
 const scorePerMatchedSymbol int = 40
 const moveLimit int = 20
 
-const emptySymbol rune = ' '
+const emptySymbol int = -1
 
-var symbols = []rune{'●', '▲', '■', '◆', '★', '❤'}
-var symbolColors = map[rune]lipgloss.Style{
-	symbols[0]: lipgloss.NewStyle().Foreground(lipgloss.Color("15")),
-	symbols[1]: lipgloss.NewStyle().Foreground(lipgloss.Color("274")),
-	symbols[2]: lipgloss.NewStyle().Foreground(lipgloss.Color("279")),
-	symbols[3]: lipgloss.NewStyle().Foreground(lipgloss.Color("2")),
-	symbols[4]: lipgloss.NewStyle().Foreground(lipgloss.Color("9")),
-	symbols[5]: lipgloss.NewStyle().Foreground(lipgloss.Color("11")),
-}
-var symbolHighlightedColors = map[rune]lipgloss.Style{
-	symbols[0]: lipgloss.NewStyle().Background(lipgloss.Color("15")),
-	symbols[1]: lipgloss.NewStyle().Background(lipgloss.Color("274")),
-	symbols[2]: lipgloss.NewStyle().Background(lipgloss.Color("279")),
-	symbols[3]: lipgloss.NewStyle().Background(lipgloss.Color("2")),
-	symbols[4]: lipgloss.NewStyle().Background(lipgloss.Color("9")),
-	symbols[5]: lipgloss.NewStyle().Background(lipgloss.Color("11")),
-}
-
+var whiteColor = lipgloss.Color("15")
+var blackColor = lipgloss.Color("0")
 var accentColor = lipgloss.Color("105")
-var highlightedStyle = lipgloss.NewStyle().Background(lipgloss.Color("15")).Foreground(lipgloss.Color("0"))
+var highlightedStyle = lipgloss.NewStyle().Background(whiteColor).Foreground(blackColor)
 
 type model struct {
 	rand               *rand.Rand
@@ -101,6 +87,7 @@ type model struct {
 	showHint       bool
 	potentialMatch []vector2d
 	help           help.Model
+	symbolSet      symbolSet
 }
 
 func initialModel(r *rand.Rand) model {
@@ -117,6 +104,7 @@ func initialModel(r *rand.Rand) model {
 		showHint:       false,
 		potentialMatch: make([]vector2d, 0),
 		help:           help.New(),
+		symbolSet:      newEmojiSymbolSet(),
 	}
 }
 
@@ -142,14 +130,6 @@ var sharedKeys = sharedKeyMap{
 // TODO: Check resizing
 // todo: fix having to press twice
 // todo: change esc key to different key (?)
-
-func toggleGameType(gt gameType) gameType {
-	if gt == Endless {
-		return LimitedMoves
-	}
-
-	return Endless
-}
 
 func (m model) Init() tea.Cmd {
 	return nil
