@@ -39,11 +39,11 @@ func (k titleViewKeyMap) FullHelp() [][]key.Binding {
 func (tv titleView) draw(m model) string {
 	const titlePart1 = "  __  __       _       _       _____ _                   \n |  \\/  | __ _| |_ ___| |__   |_   _| |__  _ __ ___  ___ \n | |\\/| |/ _` | __/ __| '_ \\    | | | '_ \\| '__/ _ \\/ _ \\\n | |  | | (_| | || (__| | | |   | | | | | | | |  __/  __/\n |_|  |_|\\__,_|\\__\\___|_| |_|   |_| |_| |_|_|  \\___|\\___|"
 	const titlePart2 = "   ____                      \n  / ___| __ _ _ __ ___   ___ \n | |  _ / _` | '_ ` _ \\ / _ \\\n | |_| | (_| | | | | | |  __/\n  \\____|\\__,_|_| |_| |_|\\___|"
-	const text = "\n Press any key to start..."
+	const text = "Press enter key to start..."
 
 	radioButtons := drawRadioButtons([]gameType{Endless, LimitedMoves}, m.options.gameType, "Game type", "T")
 	helpView := m.help.View(titleViewKeys)
-	return lipgloss.JoinVertical(lipgloss.Left, titlePart1, titlePart2, text, radioButtons, "", helpView)
+	return lipgloss.JoinVertical(lipgloss.Center, titlePart1, titlePart2, "", text, "", radioButtons, "", helpView)
 }
 
 func (tv titleView) update(msg tea.KeyMsg, m model) (tea.Model, tea.Cmd) {

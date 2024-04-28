@@ -16,21 +16,19 @@ type radioButtonItem interface {
 func drawRadioButtons[T radioButtonItem](options []T, selected T, label string, key string) string {
 	var builder strings.Builder
 	builder.WriteString(label)
-	builder.WriteString(": ")
-	for i, option := range options {
+	builder.WriteString(":  ")
+	for _, option := range options {
+		var style lipgloss.Style
 		if option == selected {
-			builder.WriteString(option.String() + " [▪]")
+			style = highlightedStyle
 		} else {
-			builder.WriteString(option.String() + " [ ]")
+			style = lipgloss.NewStyle()
 		}
+		builder.WriteString(style.Render(option.String()))
 
-		if i != len(options)-1 {
-			builder.WriteString(";")
-		}
-
-		builder.WriteString(" ")
+		builder.WriteString("  ")
 	}
-	builder.WriteString(fmt.Sprintf("(press %s)", strings.ToUpper(key)))
+	builder.WriteString(fmt.Sprintf("(press %s to change)", strings.ToUpper(key)))
 
 	return builder.String()
 }

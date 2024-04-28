@@ -84,6 +84,8 @@ var symbolHighlightedColors = map[rune]lipgloss.Style{
 	symbols[5]: lipgloss.NewStyle().Background(lipgloss.Color("11")),
 }
 
+var highlightedStyle = lipgloss.NewStyle().Background(lipgloss.Color("15")).Foreground(lipgloss.Color("0"))
+
 type model struct {
 	rand               *rand.Rand
 	grid               grid
