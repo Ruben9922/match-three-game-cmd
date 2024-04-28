@@ -50,8 +50,8 @@ func (tv titleView) draw(m model) string {
 	const titlePart2 = "   ____                      \n  / ___| __ _ _ __ ___   ___ \n | |  _ / _` | '_ ` _ \\ / _ \\\n | |_| | (_| | | | | | |  __/\n  \\____|\\__,_|_| |_| |_|\\___|"
 	const text = "Press enter key to start..."
 
-	gameTypeRadioButtons := drawRadioButtons(gameTypes, m.options.gameType, "Game type", "T")
-	symbolSetRadioButtons := drawRadioButtons(symbolSets, m.symbolSet, "Symbol set", "S")
+	gameTypeRadioButtons := drawRadioButtons(gameTypes, m.options.gameType, "Game type", titleViewKeys.ToggleGameType)
+	symbolSetRadioButtons := drawRadioButtons(symbolSets, m.symbolSet, "Symbol set", titleViewKeys.ToggleSymbolSet)
 	helpView := m.help.View(titleViewKeys)
 	return lipgloss.JoinVertical(lipgloss.Center,
 		titlePart1,

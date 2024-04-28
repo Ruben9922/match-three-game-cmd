@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/dustin/go-humanize"
 	"slices"
@@ -13,7 +14,7 @@ type radioButtonItem interface {
 	String() string
 }
 
-func drawRadioButtons[T radioButtonItem](options []T, selected T, label string, key string) string {
+func drawRadioButtons[T radioButtonItem](options []T, selected T, label string, key key.Binding) string {
 	var builder strings.Builder
 	builder.WriteString(label)
 	builder.WriteString(":  ")
@@ -28,7 +29,7 @@ func drawRadioButtons[T radioButtonItem](options []T, selected T, label string, 
 
 		builder.WriteString("  ")
 	}
-	builder.WriteString(fmt.Sprintf("(press %s to change)", strings.ToUpper(key)))
+	builder.WriteString(fmt.Sprintf("(press %s to change)", lipgloss.NewStyle().Bold(true).Render(key.Help().Key)))
 
 	return builder.String()
 }
