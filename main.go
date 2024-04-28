@@ -68,9 +68,10 @@ const moveLimit int = 20
 
 const emptySymbol int = -1
 
-var whiteColor = lipgloss.Color("15")
-var blackColor = lipgloss.Color("0")
-var accentColor = lipgloss.Color("105")
+const whiteColor = lipgloss.Color("15")
+const blackColor = lipgloss.Color("0")
+const accentColor = lipgloss.Color("105")
+
 var highlightedStyle = lipgloss.NewStyle().Background(whiteColor).Foreground(blackColor)
 
 type model struct {
