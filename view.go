@@ -5,6 +5,6 @@ import (
 )
 
 type view interface {
-	update(msg tea.KeyMsg, m model) (tea.Model, tea.Cmd)
+	update(msg tea.Msg, m model) (tea.Model, tea.Cmd)
 	draw(m model) string
 }

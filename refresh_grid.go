@@ -2,15 +2,29 @@ package main
 
 import (
 	"math/rand"
+	"slices"
 	"sort"
 )
 
+func findEmptyPoints(g grid) []vector2d {
+	emptyPoints := make([]vector2d, 0, gridWidth*gridHeight)
+	for y := 0; y < gridHeight; y++ {
+		for x := 0; x < gridWidth; x++ {
+			if g[y][x] == emptySymbol {
+				emptyPoints = append(emptyPoints, vector2d{x: x, y: y})
+			}
+		}
+	}
+	return emptyPoints
+}
+
 // todo: do initial refresh without animation and scoring
-func refreshGrid(g *grid, r *rand.Rand, score *int, isScoring bool) {
-	for {
+func refreshGrid(g *grid, r *rand.Rand, score *int, isScoring bool) bool {
+	emptyPoints := findEmptyPoints(*g)
+	if len(emptyPoints) == 0 {
 		matches := findMatches(*g)
 		if len(matches) == 0 {
-			break
+			return true
 		}
 
 		if isScoring {
@@ -20,23 +34,21 @@ func refreshGrid(g *grid, r *rand.Rand, score *int, isScoring bool) {
 
 		points := convertMatchesToPoints(matches)
 
-		// Shifting algorithm assumes points are unique; duplicate points will cause strange behaviour
-		points = removeDuplicatePoints(points)
-
 		// Set points in matches to empty
 		for _, p := range points {
 			g[p.y][p.x] = emptySymbol
 		}
 
-		// Shift symbols down and insert random symbol at top of column
-		// Instead of manually updating points list, could maybe just search through grid for empty points
-		// Assumes points are unique - duplicate points will cause strange behaviour
-		// Want to shift lower points first - hence sorting such that lower points (points with higher y) come first
-		sortPoints(points)
-		for len(points) > 0 {
-			shiftPoint(g, &points, r)
-		}
+		return false
 	}
+
+	// Shift symbols down and insert random symbol at top of column
+	// Instead of manually updating points list, could maybe just search through grid for empty points
+	// Want to shift lower points first - hence sorting such that lower points (points with higher y) come first
+	sortPoints(emptyPoints)
+	shiftPoint(g, r)
+
+	return false
 }
 
 // Match algorithm works in a way that scores the player the most points
@@ -127,6 +139,7 @@ func removeDuplicatePoints(points []vector2d) []vector2d {
 }
 
 func sortPoints(points []vector2d) {
+	// todo use slices function instead
 	sort.Slice(points, func(i, j int) bool {
 		if points[i].x == points[j].x {
 			return points[i].y > points[j].y
@@ -135,26 +148,27 @@ func sortPoints(points []vector2d) {
 	})
 }
 
-func shiftPoint(g *grid, points *[]vector2d, r *rand.Rand) {
-	updatedPoints := *points
-
-	p := updatedPoints[0]
-	updatedPoints = updatedPoints[1:]
-
-	for y := p.y; y > 0; y-- {
-		g[y][p.x] = g[y-1][p.x]
-	}
-	g[0][p.x] = r.Intn(symbolCount)
-
-	// Shift down remaining points in same column to account for shifting of corresponding empty points in grid
-	// p1.y++ for each point p1 in this column (with same x)
-	for i := 0; i < len(updatedPoints); i++ {
-		p1 := &updatedPoints[i]
-		// If point is in the same column and (strictly) above current point
-		if p1.x == p.x && p1.y < p.y {
-			p1.y++
+func shiftPoint(g *grid, r *rand.Rand) {
+	emptyPoints := findEmptyPoints(*g)
+	m := make(map[int][]int, gridWidth)
+	for _, p := range emptyPoints {
+		if m[p.x] == nil {
+			m[p.x] = make([]int, 0, gridHeight)
 		}
+
+		m[p.x] = append(m[p.x], p.y)
 	}
 
-	*points = updatedPoints
+	for x, ys := range m {
+		//slices.SortFunc(ys, func(a, b int) int {
+		//	return cmp.Compare(b, a)
+		//})
+
+		maxY := slices.Max(ys)
+
+		for y := maxY; y > 0; y-- {
+			g[y][x] = g[y-1][x]
+		}
+		g[0][x] = r.Intn(symbolCount)
+	}
 }

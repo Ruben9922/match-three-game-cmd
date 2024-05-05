@@ -33,41 +33,20 @@ func (s selectPointConfirmationViewKeyMap) FullHelp() [][]key.Binding {
 
 type selectPointConfirmationView struct{}
 
-func (s selectPointConfirmationView) update(msg tea.KeyMsg, m model) (tea.Model, tea.Cmd) {
-	switch {
-	case key.Matches(msg, selectPointConfirmationViewKeys.Quit):
-		return showQuitConfirmationView(m)
-	case key.Matches(msg, selectPointConfirmationViewKeys.Confirm):
-		// Refresh grid
-		//m.view = RefreshGridView
+func (s selectPointConfirmationView) update(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		switch {
+		case key.Matches(msg, selectPointConfirmationViewKeys.Quit):
+			return showQuitConfirmationView(m)
+		case key.Matches(msg, selectPointConfirmationViewKeys.Confirm):
+			m.view = refreshGridView{}
 
-		refreshGrid(&m.grid, m.rand, &m.score, true)
-
-		// todo: use nil everywhere instead of empty slice
-		m.potentialMatch = make([]vector2d, 0)
-		for len(m.potentialMatch) == 0 {
-			// Check if there are any possible matches; if no possible matches then create a new grid
-			m.potentialMatch = findPotentialMatch(m.grid)
-			if len(m.potentialMatch) == 0 {
-				m.grid = newGrid(m.rand)
-				refreshGrid(&m.grid, m.rand, &m.score, true)
-			}
+			return m, tickCmd()
 		}
-
-		if m.options.gameType != LimitedMoves || m.remainingMoveCount > 0 {
-			m.view = selectFirstPointView{}
-			m.point1 = vector2d{x: gridWidth / 2, y: gridHeight / 2} // Initialise point 1 to centre of grid
-			m.point2 = emptyVector2d
-		} else {
-			m.view = gameOverView{}
-			m.point1 = emptyVector2d
-			m.point2 = emptyVector2d
-		}
-
-		return m, nil
-	default:
-		return m, nil
 	}
+
+	return m, nil
 }
 
 func (s selectPointConfirmationView) draw(m model) string {

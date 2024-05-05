@@ -29,7 +29,8 @@ func (p plainSymbolSet) getSymbolRune(symbol int) rune {
 }
 
 func (p plainSymbolSet) formatSymbol(symbol int) string {
-	return string(p.symbolRunes[symbol])
+	symbolRune := p.getSymbolRune(symbol)
+	return string(symbolRune)
 }
 
 func (p plainSymbolSet) formatSymbolHighlighted(symbol int) string {
@@ -46,14 +47,22 @@ type colorSymbolSet struct {
 	symbolColors [symbolCount]lipgloss.Color
 }
 
+func (c colorSymbolSet) getSymbolColor(symbol int) lipgloss.TerminalColor {
+	if symbol < 0 || symbol >= symbolCount {
+		return lipgloss.NoColor{}
+	}
+
+	return c.symbolColors[symbol]
+}
+
 func (c colorSymbolSet) formatSymbol(symbol int) string {
-	color := c.symbolColors[symbol]
+	color := c.getSymbolColor(symbol)
 	symbolRune := c.getSymbolRune(symbol)
 	return lipgloss.NewStyle().Foreground(color).Render(string(symbolRune))
 }
 
 func (c colorSymbolSet) formatSymbolHighlighted(symbol int) string {
-	color := c.symbolColors[symbol]
+	color := c.getSymbolColor(symbol)
 	symbolRune := c.getSymbolRune(symbol)
 	return lipgloss.NewStyle().Background(color).Render(string(symbolRune))
 }

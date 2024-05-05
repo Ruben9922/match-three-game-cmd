@@ -58,64 +58,67 @@ func (s selectSecondPointViewKeyMap) FullHelp() [][]key.Binding {
 
 type selectSecondPointView struct{}
 
-func (s selectSecondPointView) update(msg tea.KeyMsg, m model) (tea.Model, tea.Cmd) {
-	switch {
-	case key.Matches(msg, selectSecondPointViewKeys.Quit):
-		return showQuitConfirmationView(m)
-	case key.Matches(msg, selectSecondPointViewKeys.Help):
-		return toggleHelp(m)
+func (s selectSecondPointView) update(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		switch {
+		case key.Matches(msg, selectSecondPointViewKeys.Quit):
+			return showQuitConfirmationView(m)
+		case key.Matches(msg, selectSecondPointViewKeys.Help):
+			return toggleHelp(m)
 
-	case key.Matches(msg, selectSecondPointViewKeys.Select):
-		// Swap the points, if it would result in a match
-		updatedGrid := m.grid
-		updatedGrid[m.point1.y][m.point1.x], updatedGrid[m.point2.y][m.point2.x] =
-			updatedGrid[m.point2.y][m.point2.x], updatedGrid[m.point1.y][m.point1.x]
-		matches := findMatches(updatedGrid)
-		if len(matches) != 0 {
-			m.grid = updatedGrid
+		case key.Matches(msg, selectSecondPointViewKeys.Select):
+			// Swap the points, if it would result in a match
+			updatedGrid := m.grid
+			updatedGrid[m.point1.y][m.point1.x], updatedGrid[m.point2.y][m.point2.x] =
+				updatedGrid[m.point2.y][m.point2.x], updatedGrid[m.point1.y][m.point1.x]
+			matches := findMatches(updatedGrid)
+			if len(matches) != 0 {
+				m.grid = updatedGrid
 
-			if m.options.gameType == LimitedMoves {
-				m.remainingMoveCount--
+				if m.options.gameType == LimitedMoves {
+					m.remainingMoveCount--
+				}
 			}
+
+			m.view = selectPointConfirmationView{}
+			return m, nil
+
+		case key.Matches(msg, selectSecondPointViewKeys.Cancel):
+			m.view = selectFirstPointView{}
+			m.point1 = vector2d{x: gridWidth / 2, y: gridHeight / 2} // Initialise point 1 to centre of grid
+			m.point2 = emptyVector2d
+			return m, nil
 		}
 
-		m.view = selectPointConfirmationView{}
-		return m, nil
-
-	case key.Matches(msg, selectSecondPointViewKeys.Cancel):
-		m.view = selectFirstPointView{}
-		m.point1 = vector2d{x: gridWidth / 2, y: gridHeight / 2} // Initialise point 1 to centre of grid
-		m.point2 = emptyVector2d
-		return m, nil
-	}
-
-	var point2Updated vector2d
-	switch {
-	case key.Matches(msg, selectSecondPointViewKeys.Up):
-		point2Updated = vector2d{
-			x: m.point1.x,
-			y: m.point1.y - 1,
+		var point2Updated vector2d
+		switch {
+		case key.Matches(msg, selectSecondPointViewKeys.Up):
+			point2Updated = vector2d{
+				x: m.point1.x,
+				y: m.point1.y - 1,
+			}
+		case key.Matches(msg, selectSecondPointViewKeys.Down):
+			point2Updated = vector2d{
+				x: m.point1.x,
+				y: m.point1.y + 1,
+			}
+		case key.Matches(msg, selectSecondPointViewKeys.Left):
+			point2Updated = vector2d{
+				x: m.point1.x - 1,
+				y: m.point1.y,
+			}
+		case key.Matches(msg, selectSecondPointViewKeys.Right):
+			point2Updated = vector2d{
+				x: m.point1.x + 1,
+				y: m.point1.y,
+			}
+		default:
+			return m, nil
 		}
-	case key.Matches(msg, selectSecondPointViewKeys.Down):
-		point2Updated = vector2d{
-			x: m.point1.x,
-			y: m.point1.y + 1,
+		if isPointInsideGrid(point2Updated) {
+			m.point2 = point2Updated
 		}
-	case key.Matches(msg, selectSecondPointViewKeys.Left):
-		point2Updated = vector2d{
-			x: m.point1.x - 1,
-			y: m.point1.y,
-		}
-	case key.Matches(msg, selectSecondPointViewKeys.Right):
-		point2Updated = vector2d{
-			x: m.point1.x + 1,
-			y: m.point1.y,
-		}
-	default:
-		return m, nil
-	}
-	if isPointInsideGrid(point2Updated) {
-		m.point2 = point2Updated
 	}
 
 	return m, nil

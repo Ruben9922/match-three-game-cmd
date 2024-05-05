@@ -75,35 +75,22 @@ func getNextElement[T comparable](slice []T, element T) T {
 	return slice[(index+1)%len(slice)]
 }
 
-func (tv titleView) update(msg tea.KeyMsg, m model) (tea.Model, tea.Cmd) {
-	switch {
-	case key.Matches(msg, titleViewKeys.Quit):
-		return showQuitConfirmationView(m)
+func (tv titleView) update(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		switch {
+		case key.Matches(msg, titleViewKeys.Quit):
+			return showQuitConfirmationView(m)
 
-	case key.Matches(msg, titleViewKeys.ToggleGameType):
-		m.options.gameType = getNextElement(gameTypes, m.options.gameType)
-	case key.Matches(msg, titleViewKeys.ToggleSymbolSet):
-		m.symbolSet = getNextElement(symbolSets, m.symbolSet)
-	case key.Matches(msg, titleViewKeys.Start):
-		//m.view = RefreshGridView
-		refreshGrid(&m.grid, m.rand, &m.score, false)
+		case key.Matches(msg, titleViewKeys.ToggleGameType):
+			m.options.gameType = getNextElement(gameTypes, m.options.gameType)
+		case key.Matches(msg, titleViewKeys.ToggleSymbolSet):
+			m.symbolSet = getNextElement(symbolSets, m.symbolSet)
+		case key.Matches(msg, titleViewKeys.Start):
+			m.view = refreshGridView{}
 
-		// todo: make this code not duplicated
-		m.potentialMatch = make([]vector2d, 0)
-		for len(m.potentialMatch) == 0 {
-			// Check if there are any possible matches; if no possible matches then create a new grid
-			m.potentialMatch = findPotentialMatch(m.grid)
-			if len(m.potentialMatch) == 0 {
-				m.grid = newGrid(m.rand)
-				refreshGrid(&m.grid, m.rand, &m.score, true)
-			}
+			return m, tickCmd()
 		}
-
-		m.view = selectFirstPointView{}
-		m.point1 = vector2d{x: gridWidth / 2, y: gridHeight / 2} // Initialise point 1 to centre of grid
-		m.point2 = emptyVector2d
-
-		//return m, tickCmd()
 	}
 
 	return m, nil

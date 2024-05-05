@@ -29,9 +29,12 @@ func (s gameOverViewKeyMap) FullHelp() [][]key.Binding {
 
 type gameOverView struct{}
 
-func (g gameOverView) update(msg tea.KeyMsg, m model) (tea.Model, tea.Cmd) {
-	if key.Matches(msg, gameOverViewKeys.Confirm) {
-		return m, tea.Quit
+func (g gameOverView) update(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		if key.Matches(msg, gameOverViewKeys.Confirm) {
+			return m, tea.Quit
+		}
 	}
 
 	return m, nil

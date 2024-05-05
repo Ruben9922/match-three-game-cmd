@@ -125,7 +125,7 @@ var sharedKeys = sharedKeyMap{
 	),
 }
 
-//type tickMsg time.Time
+type tickMsg time.Time
 
 // TODO: Add different game modes - e.g. endless, timed, limited number of moves
 // TODO: Check resizing
@@ -136,22 +136,25 @@ func (m model) Init() tea.Cmd {
 	return nil
 }
 
-//func tickCmd() tea.Cmd {
-//	return tea.Tick(150*time.Millisecond, func(t time.Time) tea.Msg {
-//		return tickMsg(t)
-//	})
-//}
+func tickCmd() tea.Cmd {
+	return tea.Tick(150*time.Millisecond, func(t time.Time) tea.Msg {
+		return tickMsg(t)
+	})
+}
+
+func skipCmd() tea.Cmd {
+	return tea.Tick(2*time.Millisecond, func(t time.Time) tea.Msg {
+		return tickMsg(t)
+	})
+}
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.help.Width = msg.Width
 
-	case tea.KeyMsg:
+	case tea.KeyMsg, tickMsg:
 		return m.view.update(msg, m)
-
-		//case tickMsg:
-		//return m, tickCmd()
 	}
 
 	return m, nil

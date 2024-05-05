@@ -82,43 +82,47 @@ func (k selectFirstPointViewHintKeyMap) FullHelp() [][]key.Binding {
 
 type selectFirstPointView struct{}
 
-func (s selectFirstPointView) update(msg tea.KeyMsg, m model) (tea.Model, tea.Cmd) {
-	if m.showHint {
-		switch {
-		case key.Matches(msg, selectFirstPointViewHintKeys.Quit):
-			return showQuitConfirmationView(m)
-		case key.Matches(msg, selectFirstPointViewHintKeys.ToggleHint):
-			m.showHint = false
+func (s selectFirstPointView) update(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		if m.showHint {
+			switch {
+			case key.Matches(msg, selectFirstPointViewHintKeys.Quit):
+				return showQuitConfirmationView(m)
+			case key.Matches(msg, selectFirstPointViewHintKeys.ToggleHint):
+				m.showHint = false
+			}
+			return m, nil
 		}
-		return m, nil
+
+		switch {
+		case key.Matches(msg, selectFirstPointViewKeys.Quit):
+			return showQuitConfirmationView(m)
+		case key.Matches(msg, selectFirstPointViewKeys.Help):
+			return toggleHelp(m)
+
+		case key.Matches(msg, selectFirstPointViewKeys.ToggleHint):
+			m.showHint = true
+
+		case key.Matches(msg, selectFirstPointViewKeys.Select):
+			m.view = selectSecondPointView{}
+			m.point2 = getInitialPoint2(m.point1)
+
+		case key.Matches(msg, selectFirstPointViewKeys.Up):
+			m.point1.y--
+			m.point1.y = (m.point1.y + gridHeight) % gridHeight // Clamp y coordinate between 0 and gridHeight - 1
+		case key.Matches(msg, selectFirstPointViewKeys.Down):
+			m.point1.y++
+			m.point1.y = (m.point1.y + gridHeight) % gridHeight // Clamp y coordinate between 0 and gridHeight - 1
+		case key.Matches(msg, selectFirstPointViewKeys.Left):
+			m.point1.x--
+			m.point1.x = (m.point1.x + gridWidth) % gridWidth // Clamp x coordinate between 0 and gridWidth - 1
+		case key.Matches(msg, selectFirstPointViewKeys.Right):
+			m.point1.x++
+			m.point1.x = (m.point1.x + gridWidth) % gridWidth // Clamp x coordinate between 0 and gridWidth - 1
+		}
 	}
 
-	switch {
-	case key.Matches(msg, selectFirstPointViewKeys.Quit):
-		return showQuitConfirmationView(m)
-	case key.Matches(msg, selectFirstPointViewKeys.Help):
-		return toggleHelp(m)
-
-	case key.Matches(msg, selectFirstPointViewKeys.ToggleHint):
-		m.showHint = true
-
-	case key.Matches(msg, selectFirstPointViewKeys.Select):
-		m.view = selectSecondPointView{}
-		m.point2 = getInitialPoint2(m.point1)
-
-	case key.Matches(msg, selectFirstPointViewKeys.Up):
-		m.point1.y--
-		m.point1.y = (m.point1.y + gridHeight) % gridHeight // Clamp y coordinate between 0 and gridHeight - 1
-	case key.Matches(msg, selectFirstPointViewKeys.Down):
-		m.point1.y++
-		m.point1.y = (m.point1.y + gridHeight) % gridHeight // Clamp y coordinate between 0 and gridHeight - 1
-	case key.Matches(msg, selectFirstPointViewKeys.Left):
-		m.point1.x--
-		m.point1.x = (m.point1.x + gridWidth) % gridWidth // Clamp x coordinate between 0 and gridWidth - 1
-	case key.Matches(msg, selectFirstPointViewKeys.Right):
-		m.point1.x++
-		m.point1.x = (m.point1.x + gridWidth) % gridWidth // Clamp x coordinate between 0 and gridWidth - 1
-	}
 	return m, nil
 }
 

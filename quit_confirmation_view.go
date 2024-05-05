@@ -34,13 +34,16 @@ func (q quitConfirmationViewKeyMap) FullHelp() [][]key.Binding {
 
 type quitConfirmationView struct{}
 
-func (q quitConfirmationView) update(msg tea.KeyMsg, m model) (tea.Model, tea.Cmd) {
-	switch {
-	case key.Matches(msg, quitConfirmationViewKeys.Quit):
-		return m, tea.Quit
-	case key.Matches(msg, quitConfirmationViewKeys.Cancel):
-		m.view = m.previousView
-		return m, nil
+func (q quitConfirmationView) update(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		switch {
+		case key.Matches(msg, quitConfirmationViewKeys.Quit):
+			return m, tea.Quit
+		case key.Matches(msg, quitConfirmationViewKeys.Cancel):
+			m.view = m.previousView
+			return m, nil
+		}
 	}
 
 	return m, nil
