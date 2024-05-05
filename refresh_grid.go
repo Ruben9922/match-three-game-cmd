@@ -3,7 +3,6 @@ package main
 import (
 	"math/rand"
 	"slices"
-	"sort"
 )
 
 func findEmptyPoints(g grid) []vector2d {
@@ -43,9 +42,6 @@ func refreshGrid(g *grid, r *rand.Rand, score *int, isScoring bool) bool {
 	}
 
 	// Shift symbols down and insert random symbol at top of column
-	// Instead of manually updating points list, could maybe just search through grid for empty points
-	// Want to shift lower points first - hence sorting such that lower points (points with higher y) come first
-	sortPoints(emptyPoints)
 	shiftPoint(g, r)
 
 	return false
@@ -138,16 +134,6 @@ func removeDuplicatePoints(points []vector2d) []vector2d {
 	return updatedPoints
 }
 
-func sortPoints(points []vector2d) {
-	// todo use slices function instead
-	sort.Slice(points, func(i, j int) bool {
-		if points[i].x == points[j].x {
-			return points[i].y > points[j].y
-		}
-		return points[i].x < points[j].x
-	})
-}
-
 func shiftPoint(g *grid, r *rand.Rand) {
 	emptyPoints := findEmptyPoints(*g)
 	m := make(map[int][]int, gridWidth)
@@ -160,10 +146,7 @@ func shiftPoint(g *grid, r *rand.Rand) {
 	}
 
 	for x, ys := range m {
-		//slices.SortFunc(ys, func(a, b int) int {
-		//	return cmp.Compare(b, a)
-		//})
-
+		// Want to shift lower points first - hence getting the lowest point (point with highest y value)
 		maxY := slices.Max(ys)
 
 		for y := maxY; y > 0; y-- {
