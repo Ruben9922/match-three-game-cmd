@@ -54,19 +54,18 @@ func (r refreshGridView) update(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 		// todo: sort out scoring
 		finished = refreshGrid(&m.grid, m.rand, &m.score, true)
 
-		// todo: use nil everywhere instead of empty slice
-		m.potentialMatch = make([]vector2d, 0)
-		for len(m.potentialMatch) == 0 {
-			// Check if there are any possible matches; if no possible matches then create a new grid
-			m.potentialMatch = findPotentialMatch(m.grid)
-			if len(m.potentialMatch) == 0 {
-				m.grid = newGrid(m.rand)
-				finished = refreshGrid(&m.grid, m.rand, &m.score, true)
-			}
-		}
-
 		if finished {
-			if m.options.gameType != LimitedMoves || m.remainingMoveCount > 0 {
+			isPlaying := m.options.gameType != LimitedMoves || m.remainingMoveCount > 0
+			if isPlaying {
+				// Check if there is a potential match; if not, then navigate to "no possible moves" view to create a new grid
+				// todo: use nil everywhere instead of empty slice
+				m.potentialMatch = findPotentialMatch(m.grid)
+				if len(m.potentialMatch) == 0 {
+					m.view = noPossibleMovesView{}
+
+					return m, nil
+				}
+
 				m.view = selectFirstPointView{}
 				m.point1 = vector2d{x: gridWidth / 2, y: gridHeight / 2} // Initialise point 1 to centre of grid
 			} else {
