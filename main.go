@@ -84,11 +84,10 @@ type model struct {
 	previousView       view
 	point1             vector2d
 	point2             vector2d
-	//animationQueue      []grid
-	showHint       bool
-	potentialMatch []vector2d
-	help           help.Model
-	symbolSet      symbolSet
+	showHint           bool
+	potentialMatch     []vector2d
+	help               help.Model
+	symbolSet          symbolSet
 }
 
 func initialModel(r *rand.Rand) model {
@@ -101,11 +100,10 @@ func initialModel(r *rand.Rand) model {
 		view:               titleView{},
 		point1:             emptyVector2d,
 		point2:             emptyVector2d,
-		//animationQueue:      make([]grid, 0),
-		showHint:       false,
-		potentialMatch: make([]vector2d, 0),
-		help:           help.New(),
-		symbolSet:      newEmojiSymbolSet(),
+		showHint:           false,
+		potentialMatch:     make([]vector2d, 0),
+		help:               help.New(),
+		symbolSet:          newEmojiSymbolSet(),
 	}
 }
 
