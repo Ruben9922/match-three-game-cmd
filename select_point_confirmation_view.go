@@ -47,6 +47,8 @@ func (s selectPointConfirmationView) update(msg tea.Msg, m model) (tea.Model, te
 				return m, nil
 			} else {
 				m.view = refreshGridView{}
+				m.point1 = emptyVector2d
+				m.point2 = emptyVector2d
 
 				return m, tickCmd()
 			}
