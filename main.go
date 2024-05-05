@@ -127,7 +127,6 @@ type tickMsg time.Time
 
 // TODO: Add different game modes - e.g. endless, timed, limited number of moves
 // TODO: Check resizing
-// todo: fix having to press twice
 // todo: change esc key to different key (?)
 
 func (m model) Init() tea.Cmd {
