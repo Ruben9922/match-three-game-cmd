@@ -122,18 +122,6 @@ func convertMatchesToPoints(matches []match) []vector2d {
 	return points
 }
 
-func removeDuplicatePoints(points []vector2d) []vector2d {
-	pointsMap := make(map[vector2d]bool, len(points))
-	updatedPoints := make([]vector2d, 0, len(points))
-	for _, p := range points {
-		if _, present := pointsMap[p]; !present {
-			pointsMap[p] = true
-			updatedPoints = append(updatedPoints, p)
-		}
-	}
-	return updatedPoints
-}
-
 func shiftPoint(g *grid, r *rand.Rand) {
 	emptyPoints := findEmptyPoints(*g)
 	m := make(map[int][]int, gridWidth)
