@@ -87,7 +87,6 @@ func (s selectSecondPointView) update(msg tea.Msg, m model) (tea.Model, tea.Cmd)
 		case key.Matches(msg, selectSecondPointViewKeys.Cancel):
 			m.view = selectFirstPointView{}
 			m.point1 = vector2d{x: gridWidth / 2, y: gridHeight / 2} // Initialise point 1 to centre of grid
-			m.point2 = emptyVector2d
 			return m, nil
 		}
 

@@ -67,11 +67,8 @@ func (r refreshGridView) update(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 		if m.options.gameType != LimitedMoves || m.remainingMoveCount > 0 {
 			m.view = selectFirstPointView{}
 			m.point1 = vector2d{x: gridWidth / 2, y: gridHeight / 2} // Initialise point 1 to centre of grid
-			m.point2 = emptyVector2d
 		} else {
 			m.view = gameOverView{}
-			m.point1 = emptyVector2d
-			m.point2 = emptyVector2d
 		}
 
 		return m, nil
