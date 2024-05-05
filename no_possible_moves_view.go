@@ -46,6 +46,7 @@ func (n noPossibleMovesView) update(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 				// Check if there are any possible matches; if no possible matches then create a new grid
 				m.grid = newGrid(m.rand)
 
+				// todo: extract into function
 				// Refresh the grid to remove all matches
 				finished := false
 				for !finished {
@@ -55,6 +56,7 @@ func (n noPossibleMovesView) update(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 				m.potentialMatch = findPotentialMatch(m.grid)
 			}
 
+			// todo: don't need to navigate to refresh grid view
 			m.view = refreshGridView{}
 			m.point1 = emptyVector2d
 			m.point2 = emptyVector2d

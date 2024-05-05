@@ -51,7 +51,6 @@ func (r refreshGridView) update(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 
 	finished := false
 	for {
-		// todo: sort out scoring
 		finished = refreshGrid(&m.grid, m.rand, &m.score, true)
 
 		if finished {

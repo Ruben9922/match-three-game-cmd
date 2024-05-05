@@ -17,7 +17,6 @@ func findEmptyPoints(g grid) []vector2d {
 	return emptyPoints
 }
 
-// todo: do initial refresh without animation and scoring
 func refreshGrid(g *grid, r *rand.Rand, score *int, isScoring bool) bool {
 	emptyPoints := findEmptyPoints(*g)
 	if len(emptyPoints) == 0 {
