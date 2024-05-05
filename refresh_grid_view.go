@@ -49,35 +49,36 @@ func (r refreshGridView) update(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 		return m, nil
 	}
 
-	// todo: sort out scoring
-	finished := refreshGrid(&m.grid, m.rand, &m.score, true)
+	finished := false
+	for {
+		// todo: sort out scoring
+		finished = refreshGrid(&m.grid, m.rand, &m.score, true)
 
-	// todo: use nil everywhere instead of empty slice
-	m.potentialMatch = make([]vector2d, 0)
-	for len(m.potentialMatch) == 0 {
-		// Check if there are any possible matches; if no possible matches then create a new grid
-		m.potentialMatch = findPotentialMatch(m.grid)
-		if len(m.potentialMatch) == 0 {
-			m.grid = newGrid(m.rand)
-			finished = refreshGrid(&m.grid, m.rand, &m.score, true)
-		}
-	}
-
-	if finished {
-		if m.options.gameType != LimitedMoves || m.remainingMoveCount > 0 {
-			m.view = selectFirstPointView{}
-			m.point1 = vector2d{x: gridWidth / 2, y: gridHeight / 2} // Initialise point 1 to centre of grid
-		} else {
-			m.view = gameOverView{}
+		// todo: use nil everywhere instead of empty slice
+		m.potentialMatch = make([]vector2d, 0)
+		for len(m.potentialMatch) == 0 {
+			// Check if there are any possible matches; if no possible matches then create a new grid
+			m.potentialMatch = findPotentialMatch(m.grid)
+			if len(m.potentialMatch) == 0 {
+				m.grid = newGrid(m.rand)
+				finished = refreshGrid(&m.grid, m.rand, &m.score, true)
+			}
 		}
 
-		return m, nil
-	}
+		if finished {
+			if m.options.gameType != LimitedMoves || m.remainingMoveCount > 0 {
+				m.view = selectFirstPointView{}
+				m.point1 = vector2d{x: gridWidth / 2, y: gridHeight / 2} // Initialise point 1 to centre of grid
+			} else {
+				m.view = gameOverView{}
+			}
 
-	if skipped {
-		return m, skipCmd()
-	} else {
-		return m, tickCmd()
+			return m, nil
+		}
+
+		if !skipped {
+			return m, tickCmd()
+		}
 	}
 }
 

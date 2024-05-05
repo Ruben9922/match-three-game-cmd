@@ -139,12 +139,6 @@ func tickCmd() tea.Cmd {
 	})
 }
 
-func skipCmd() tea.Cmd {
-	return tea.Tick(2*time.Millisecond, func(t time.Time) tea.Msg {
-		return tickMsg(t)
-	})
-}
-
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
