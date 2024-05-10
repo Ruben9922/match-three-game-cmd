@@ -160,7 +160,7 @@ func (s selectFirstPointView) draw(m model) string {
 
 	var selectedPoints []vector2d
 	if m.showHint {
-		selectedPoints = m.potentialMatch
+		selectedPoints = findPotentialMatch(m.grid)
 	} else {
 		selectedPoints = []vector2d{m.point1}
 	}

@@ -85,7 +85,6 @@ type model struct {
 	point1             vector2d
 	point2             vector2d
 	showHint           bool
-	potentialMatch     []vector2d
 	help               help.Model
 	symbolSet          symbolSet
 }
@@ -93,7 +92,6 @@ type model struct {
 func initialModel(r *rand.Rand) model {
 	return model{
 		rand:               r,
-		grid:               newGrid(r),
 		score:              0,
 		options:            options{gameType: Endless},
 		remainingMoveCount: moveLimit,
@@ -101,7 +99,6 @@ func initialModel(r *rand.Rand) model {
 		point1:             emptyVector2d,
 		point2:             emptyVector2d,
 		showHint:           false,
-		potentialMatch:     make([]vector2d, 0),
 		help:               help.New(),
 		symbolSet:          newEmojiSymbolSet(),
 	}

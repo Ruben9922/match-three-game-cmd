@@ -17,7 +17,30 @@ func findEmptyPoints(g grid) []vector2d {
 	return emptyPoints
 }
 
-func refreshGrid(g *grid, r *rand.Rand, score *int, isScoring bool) bool {
+func newGridWithMatchesRemoved(r *rand.Rand) grid {
+	g := newGrid(r)
+	removeMatches(&g, r)
+	return g
+}
+
+func removeMatches(g *grid, r *rand.Rand) {
+	finished := false
+	for !finished {
+		finished = refreshGrid(g, r, nil)
+	}
+}
+
+func ensurePotentialMatch(g *grid, r *rand.Rand) {
+	potentialMatch := findPotentialMatch(*g)
+	for len(potentialMatch) == 0 {
+		// Check if there are any possible matches; if no possible matches then create a new grid
+		*g = newGridWithMatchesRemoved(r)
+
+		potentialMatch = findPotentialMatch(*g)
+	}
+}
+
+func refreshGrid(g *grid, r *rand.Rand, score *int) bool {
 	emptyPoints := findEmptyPoints(*g)
 	if len(emptyPoints) == 0 {
 		matches := findMatches(*g)
@@ -25,7 +48,7 @@ func refreshGrid(g *grid, r *rand.Rand, score *int, isScoring bool) bool {
 			return true
 		}
 
-		if isScoring {
+		if score != nil {
 			matchesScore := computeScore(matches)
 			*score += matchesScore
 		}

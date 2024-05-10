@@ -4,6 +4,7 @@ import "sort"
 
 // May want to revise this to allow potential matches longer than minimum match length
 // Add text warning that it may not be the optimal match
+// todo: use nil everywhere instead of empty slice
 func findPotentialMatch(g grid) []vector2d {
 	filters := generatePotentialMatchFilters()
 

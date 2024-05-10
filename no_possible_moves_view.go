@@ -39,22 +39,7 @@ func (n noPossibleMovesView) update(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, noPossibleMovesViewKeys.Quit):
 			return showQuitConfirmationView(m)
 		case key.Matches(msg, noPossibleMovesViewKeys.Confirm):
-			// todo: use nil everywhere instead of empty slice
-			// Check if there is a potential match; if not, then create a new grid
-			m.potentialMatch = findPotentialMatch(m.grid)
-			for len(m.potentialMatch) == 0 {
-				// Check if there are any possible matches; if no possible matches then create a new grid
-				m.grid = newGrid(m.rand)
-
-				// todo: extract into function
-				// Refresh the grid to remove all matches
-				finished := false
-				for !finished {
-					finished = refreshGrid(&m.grid, m.rand, &m.score, false)
-				}
-
-				m.potentialMatch = findPotentialMatch(m.grid)
-			}
+			ensurePotentialMatch(&m.grid, m.rand)
 
 			// todo: don't need to navigate to refresh grid view
 			m.view = refreshGridView{}

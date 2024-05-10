@@ -51,15 +51,14 @@ func (r refreshGridView) update(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 
 	finished := false
 	for {
-		finished = refreshGrid(&m.grid, m.rand, &m.score, true)
+		finished = refreshGrid(&m.grid, m.rand, &m.score)
 
 		if finished {
 			isPlaying := m.options.gameType != LimitedMoves || m.remainingMoveCount > 0
 			if isPlaying {
 				// Check if there is a potential match; if not, then navigate to "no possible moves" view to create a new grid
-				// todo: use nil everywhere instead of empty slice
-				m.potentialMatch = findPotentialMatch(m.grid)
-				if len(m.potentialMatch) == 0 {
+				potentialMatch := findPotentialMatch(m.grid)
+				if len(potentialMatch) == 0 {
 					m.view = noPossibleMovesView{}
 
 					return m, nil
