@@ -82,8 +82,8 @@ func findMatches(g grid) []match {
 	matches := make([]match, 0, 10)
 	for _, d := range directions {
 		offset := vector2d{
-			x: max((d.x*minMatchLength)-1, 0),
-			y: max((d.y*minMatchLength)-1, 0),
+			x: maxInt((d.x*minMatchLength)-1, 0),
+			y: maxInt((d.y*minMatchLength)-1, 0),
 		}
 
 		d.y = -d.y
