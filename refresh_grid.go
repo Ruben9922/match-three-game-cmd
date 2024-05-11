@@ -53,7 +53,7 @@ func refreshGrid(g *grid, r *rand.Rand, score *int) bool {
 			*score += matchesScore
 		}
 
-		points := convertMatchesToPoints(matches)
+		points := flatten(matches)
 
 		// Set points in matches to empty
 		for _, p := range points {
@@ -69,12 +69,13 @@ func refreshGrid(g *grid, r *rand.Rand, score *int) bool {
 	return false
 }
 
-func findMatches(g grid) []match {
+func findMatches(g grid) [][]vector2d {
 	directions := []vector2d{
 		{x: 1, y: 0},
 		{x: 0, y: 1},
 	}
-	matches := make([]match, 0, 10)
+	// Can't calculate actual capacity ahead of time, so just making a guess
+	matches := make([][]vector2d, 0, 10)
 	for _, d := range directions {
 		offset := vector2d{
 			x: maxInt((d.x*minMatchLength)-1, 0),
@@ -85,12 +86,12 @@ func findMatches(g grid) []match {
 
 		for i := gridHeight - 1; i >= offset.y; i-- {
 			for j := 0; j < gridWidth-offset.x; j++ {
-				matchLength := 0
 				originPoint := vector2d{x: j, y: i}
+				match := make([]vector2d, 0, gridWidth) // todo: improve capacity calculation
 				for {
 					currentPoint := vector2d{
-						x: j + (matchLength * d.x),
-						y: i + (matchLength * d.y),
+						x: j + (len(match) * d.x),
+						y: i + (len(match) * d.y),
 					}
 
 					if !isPointInsideGrid(currentPoint) {
@@ -102,12 +103,11 @@ func findMatches(g grid) []match {
 						break
 					}
 
-					matchLength++
+					match = append(match, currentPoint)
 				}
 
-				m := newMatch(originPoint, d, matchLength)
-				if matchLength >= minMatchLength {
-					matches = updateMatches(matches, m)
+				if len(match) >= minMatchLength {
+					matches = updateMatches(matches, match)
 				}
 			}
 		}
@@ -117,20 +117,17 @@ func findMatches(g grid) []match {
 }
 
 // This fixes an issue where longer matches (longer than `minMatchLength`) were being counted more than once
-func updateMatches(matches []match, newMatch match) []match {
-	updatedMatches := make([]match, 0, len(matches))
+func updateMatches(matches [][]vector2d, newMatch []vector2d) [][]vector2d {
+	updatedMatches := make([][]vector2d, 0, len(matches))
 	for _, existingMatch := range matches {
-		newMatchPoints := convertMatchesToPoints([]match{newMatch})
-		existingMatchPoints := convertMatchesToPoints([]match{existingMatch})
-
 		// If new match is a subset of any existing match, then don't add it because it's not needed
-		if isSubset(newMatchPoints, existingMatchPoints) {
+		if isSubset(newMatch, existingMatch) {
 			return matches
 		}
 
 		// If any existing match is a subset of the new match, then remove it as it will be replaced by the new match
 		// I.e. only keep existing matches which aren't a subset of the new match
-		if !isSubset(existingMatchPoints, newMatchPoints) {
+		if !isSubset(existingMatch, newMatch) {
 			updatedMatches = append(updatedMatches, existingMatch)
 		}
 	}
@@ -158,28 +155,24 @@ func isSubset[T comparable](possibleSubset, s []T) bool {
 	return true
 }
 
-func computeScore(matches []match) int {
+func computeScore(matches [][]vector2d) int {
 	totalSymbolCount := 0
 	for _, m := range matches {
-		totalSymbolCount += m.length
+		totalSymbolCount += len(m)
 	}
 	score := totalSymbolCount * scorePerMatchedSymbol
 	return score
 }
 
-func convertMatchesToPoints(matches []match) []vector2d {
-	// Calculating actual capacity would require looping through `matches`, so just making a guess
-	points := make([]vector2d, 0, len(matches)*5)
-	for _, m := range matches {
-		for i := 0; i < m.length; i++ {
-			point := vector2d{
-				x: m.position.x + (i * m.direction.x),
-				y: m.position.y + (i * m.direction.y),
-			}
-			points = append(points, point)
+func flatten[T any](s [][]T) (flattened []T) {
+	// Calculating actual capacity would require looping through `s`, so just making a guess
+	flattened = make([]T, 0, len(s)*5)
+	for _, ss := range s {
+		for _, v := range ss {
+			flattened = append(flattened, v)
 		}
 	}
-	return points
+	return
 }
 
 func shiftPoint(g *grid, r *rand.Rand) {

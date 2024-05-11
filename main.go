@@ -32,21 +32,6 @@ type vector2d struct {
 
 var emptyVector2d = vector2d{x: -1, y: -1}
 
-// Maybe remove this and just use slice of points instead (?)
-type match struct {
-	position  vector2d
-	direction vector2d
-	length    int
-}
-
-func newMatch(position, direction vector2d, length int) match {
-	return match{
-		position:  position,
-		direction: direction,
-		length:    length,
-	}
-}
-
 type gameType int
 
 const (

@@ -73,7 +73,7 @@ func (s selectPointConfirmationView) draw(m model) string {
 		pointsGainedText := fmt.Sprintf("+%d points!", matchesScore)
 		text = lipgloss.JoinVertical(lipgloss.Left, swappedText, "", matchText, pointsGainedText)
 
-		selectedPoints = convertMatchesToPoints(matches)
+		selectedPoints = flatten(matches)
 	} else {
 		text = "Not swapping as swap would not result in a match.\nPlease try again."
 		selectedPoints = []vector2d{m.point1, m.point2}
