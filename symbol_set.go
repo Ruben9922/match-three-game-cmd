@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/charmbracelet/lipgloss"
+	"strings"
 )
 
 type symbolSet interface {
@@ -20,22 +21,23 @@ func (p plainSymbolSet) String() string {
 	return p.name
 }
 
-func (p plainSymbolSet) getSymbolRune(symbol int) rune {
+func (p plainSymbolSet) getSymbolRune(symbol int) string {
+	emptySymbolRune := strings.Repeat(" ", lipgloss.Width(string(p.symbolRunes[0])))
+
 	if symbol < 0 || symbol >= symbolCount {
-		return ' '
+		return emptySymbolRune
 	}
 
-	return p.symbolRunes[symbol]
+	return string(p.symbolRunes[symbol])
 }
 
 func (p plainSymbolSet) formatSymbol(symbol int) string {
-	symbolRune := p.getSymbolRune(symbol)
-	return string(symbolRune)
+	return p.getSymbolRune(symbol)
 }
 
 func (p plainSymbolSet) formatSymbolHighlighted(symbol int) string {
 	symbolRune := p.getSymbolRune(symbol)
-	return lipgloss.NewStyle().Background(whiteColor).Render(string(symbolRune))
+	return lipgloss.NewStyle().Background(whiteColor).Render(symbolRune)
 }
 
 func newEmojiSymbolSet() plainSymbolSet {
@@ -58,13 +60,13 @@ func (c colorSymbolSet) getSymbolColor(symbol int) lipgloss.TerminalColor {
 func (c colorSymbolSet) formatSymbol(symbol int) string {
 	color := c.getSymbolColor(symbol)
 	symbolRune := c.getSymbolRune(symbol)
-	return lipgloss.NewStyle().Foreground(color).Render(string(symbolRune))
+	return lipgloss.NewStyle().Foreground(color).Render(symbolRune)
 }
 
 func (c colorSymbolSet) formatSymbolHighlighted(symbol int) string {
 	color := c.getSymbolColor(symbol)
 	symbolRune := c.getSymbolRune(symbol)
-	return lipgloss.NewStyle().Background(color).Render(string(symbolRune))
+	return lipgloss.NewStyle().Background(color).Render(symbolRune)
 }
 
 func newColorSymbolSet(name string, symbolRunes [symbolCount]rune) colorSymbolSet {
