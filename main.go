@@ -11,6 +11,8 @@ import (
 	"time"
 )
 
+var version = "dev"
+
 const symbolCount = 6
 
 type grid [gridHeight][gridWidth]int
