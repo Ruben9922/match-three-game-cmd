@@ -69,11 +69,6 @@ func refreshGrid(g *grid, r *rand.Rand, score *int) bool {
 	return false
 }
 
-// Match algorithm works in a way that scores the player the most points
-// * Prefers longer matches (checks for all possible matches and chooses the longest one) - to score the player more points
-// * Prefers lower down matches - idea is that this would score the player more points as more pieces falling means potentially more "automatic" matches
-// * "Maximal munch" behaviour - matches will be as long as possible; matches can be longer than the minimum match length
-// TODO: Somehow remove overlapping matches - noticed single match of 4 is counting as two matches
 func findMatches(g grid) []match {
 	directions := []vector2d{
 		{x: 1, y: 0},
@@ -110,14 +105,57 @@ func findMatches(g grid) []match {
 					matchLength++
 				}
 
+				m := newMatch(originPoint, d, matchLength)
 				if matchLength >= minMatchLength {
-					matches = append(matches, newMatch(originPoint, d, matchLength))
+					matches = updateMatches(matches, m)
 				}
 			}
 		}
 	}
 
 	return matches
+}
+
+// This fixes an issue where longer matches (longer than `minMatchLength`) were being counted more than once
+func updateMatches(matches []match, newMatch match) []match {
+	updatedMatches := make([]match, 0, len(matches))
+	for _, existingMatch := range matches {
+		newMatchPoints := convertMatchesToPoints([]match{newMatch})
+		existingMatchPoints := convertMatchesToPoints([]match{existingMatch})
+
+		// If new match is a subset of any existing match, then don't add it because it's not needed
+		if isSubset(newMatchPoints, existingMatchPoints) {
+			return matches
+		}
+
+		// If any existing match is a subset of the new match, then remove it as it will be replaced by the new match
+		// I.e. only keep existing matches which aren't a subset of the new match
+		if !isSubset(existingMatchPoints, newMatchPoints) {
+			updatedMatches = append(updatedMatches, existingMatch)
+		}
+	}
+	updatedMatches = append(updatedMatches, newMatch)
+	return updatedMatches
+}
+
+func isSubset[T comparable](possibleSubset, s []T) bool {
+	if len(possibleSubset) > len(s) {
+		return false
+	}
+
+	// Populate map from `s`
+	m := make(map[T]struct{}, len(s))
+	for _, v := range s {
+		m[v] = struct{}{}
+	}
+
+	// Check all values in `possibleSubset` are also present in the map `m`
+	for _, v := range possibleSubset {
+		if _, present := m[v]; !present {
+			return false
+		}
+	}
+	return true
 }
 
 func computeScore(matches []match) int {
