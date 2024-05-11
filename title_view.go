@@ -57,7 +57,7 @@ func (tv titleView) draw(m model) string {
 		titlePart1,
 		lipgloss.JoinHorizontal(lipgloss.Bottom,
 			lipgloss.NewStyle().MarginLeft(lipgloss.Width(version)+2).MarginRight(2).Render(titlePart2),
-			version,
+			secondaryTextStyle.Render(version),
 		),
 		"",
 		text,

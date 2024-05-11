@@ -29,7 +29,13 @@ func drawRadioButtons[T radioButtonItem](options []T, selected T, label string, 
 
 		builder.WriteString("  ")
 	}
-	builder.WriteString(fmt.Sprintf("(press %s to change)", lipgloss.NewStyle().Bold(true).Render(key.Help().Key)))
+
+	keyString := key.Help().Key
+	styledKeyString := lipgloss.NewStyle().Inherit(secondaryTextStyle).Bold(true).Render(keyString)
+	// Couldn't get styling to work correctly with `fmt.Sprintf`, hence styling each substring separately then
+	// concatenating
+	keyDescription := secondaryTextStyle.Render("(press ") + styledKeyString + secondaryTextStyle.Render(" to change)")
+	builder.WriteString(keyDescription)
 
 	return builder.String()
 }

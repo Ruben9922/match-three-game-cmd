@@ -75,6 +75,7 @@ const blackColor = lipgloss.Color("0")
 const accentColor = lipgloss.Color("105")
 
 var highlightedStyle = lipgloss.NewStyle().Background(whiteColor).Foreground(blackColor)
+var secondaryTextStyle = help.New().Styles.ShortDesc
 
 type model struct {
 	rand               *rand.Rand
