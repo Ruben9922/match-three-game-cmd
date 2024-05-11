@@ -5,7 +5,6 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"slices"
-	"unicode/utf8"
 )
 
 type titleView struct{}
@@ -57,7 +56,7 @@ func (tv titleView) draw(m model) string {
 	return lipgloss.JoinVertical(lipgloss.Center,
 		titlePart1,
 		lipgloss.JoinHorizontal(lipgloss.Bottom,
-			lipgloss.NewStyle().MarginLeft(utf8.RuneCountInString(version)+2).MarginRight(2).Render(titlePart2),
+			lipgloss.NewStyle().MarginLeft(lipgloss.Width(version)+2).MarginRight(2).Render(titlePart2),
 			version,
 		),
 		"",
