@@ -6,6 +6,12 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
+func showQuitConfirmationView(m model) (tea.Model, tea.Cmd) {
+	m.previousView = m.view
+	m.view = quitConfirmationView{}
+	return m, nil
+}
+
 type quitConfirmationViewKeyMap struct {
 	Quit   key.Binding
 	Cancel key.Binding

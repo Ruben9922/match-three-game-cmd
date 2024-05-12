@@ -7,6 +7,17 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
+func showSelectFirstPointView(m model) (tea.Model, tea.Cmd) {
+	m.view = selectFirstPointView{}
+	m.point1 = vector2d{x: gridWidth / 2, y: gridHeight / 2} // Initialise point 1 to centre of grid
+	return m, nil
+}
+
+func returnToSelectFirstPointView(m model) (tea.Model, tea.Cmd) {
+	m.view = selectFirstPointView{}
+	return m, nil
+}
+
 type selectFirstPointViewKeyMap struct {
 	sharedKeyMap
 	Select     key.Binding

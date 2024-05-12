@@ -6,6 +6,13 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
+func showRefreshGridView(m model) (tea.Model, tea.Cmd) {
+	m.view = refreshGridView{}
+	m.point1 = emptyVector2d
+	m.point2 = emptyVector2d
+	return m, tickCmd()
+}
+
 type refreshGridViewKeyMap struct {
 	Quit key.Binding
 	Skip key.Binding
@@ -64,13 +71,11 @@ func (r refreshGridView) update(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 					return m, nil
 				}
 
-				m.view = selectFirstPointView{}
-				m.point1 = vector2d{x: gridWidth / 2, y: gridHeight / 2} // Initialise point 1 to centre of grid
+				return showSelectFirstPointView(m)
 			} else {
 				m.view = gameOverView{}
+				return m, nil
 			}
-
-			return m, nil
 		}
 
 		if !skipped {

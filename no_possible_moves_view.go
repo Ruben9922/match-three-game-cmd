@@ -42,11 +42,7 @@ func (n noPossibleMovesView) update(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 			ensurePotentialMatch(&m.grid, m.rand)
 
 			// todo: don't need to navigate to refresh grid view
-			m.view = refreshGridView{}
-			m.point1 = emptyVector2d
-			m.point2 = emptyVector2d
-
-			return m, tickCmd()
+			return showRefreshGridView(m)
 		}
 	}
 

@@ -42,15 +42,9 @@ func (s selectPointConfirmationView) update(msg tea.Msg, m model) (tea.Model, te
 		case key.Matches(msg, selectPointConfirmationViewKeys.Confirm):
 			matches := findMatches(m.grid)
 			if len(matches) == 0 {
-				m.view = selectFirstPointView{}
-
-				return m, nil
+				return returnToSelectFirstPointView(m)
 			} else {
-				m.view = refreshGridView{}
-				m.point1 = emptyVector2d
-				m.point2 = emptyVector2d
-
-				return m, tickCmd()
+				return showRefreshGridView(m)
 			}
 		}
 	}

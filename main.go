@@ -141,12 +141,6 @@ func toggleHelp(m model) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func showQuitConfirmationView(m model) (tea.Model, tea.Cmd) {
-	m.previousView = m.view
-	m.view = quitConfirmationView{}
-	return m, nil
-}
-
 func (m model) View() string {
 	return lipgloss.NewStyle().Padding(2, 4).Render(m.view.draw(m))
 }
