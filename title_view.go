@@ -93,8 +93,7 @@ func (tv titleView) update(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 			m.grid = newGridWithMatchesRemoved(m.rand)
 			ensurePotentialMatch(&m.grid, m.rand)
 
-			// todo: don't need to navigate to refresh grid view
-			return showRefreshGridView(m)
+			return showSelectFirstPointView(m)
 		}
 	}
 

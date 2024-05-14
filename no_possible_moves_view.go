@@ -41,8 +41,7 @@ func (n noPossibleMovesView) update(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, noPossibleMovesViewKeys.Confirm):
 			ensurePotentialMatch(&m.grid, m.rand)
 
-			// todo: don't need to navigate to refresh grid view
-			return showRefreshGridView(m)
+			return showSelectFirstPointView(m)
 		}
 	}
 
