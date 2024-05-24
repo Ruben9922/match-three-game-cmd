@@ -9,12 +9,12 @@ import (
 )
 
 type selectPointConfirmationViewKeyMap struct {
-	Quit    key.Binding
+	EndGame key.Binding
 	Confirm key.Binding
 }
 
 var selectPointConfirmationViewKeys = selectPointConfirmationViewKeyMap{
-	Quit: sharedKeys.Quit,
+	EndGame: sharedKeys.EndGame,
 	Confirm: key.NewBinding(
 		key.WithKeys("enter"),
 		key.WithHelp("↵", "continue"),
@@ -22,12 +22,12 @@ var selectPointConfirmationViewKeys = selectPointConfirmationViewKeyMap{
 }
 
 func (s selectPointConfirmationViewKeyMap) ShortHelp() []key.Binding {
-	return []key.Binding{s.Confirm, s.Quit}
+	return []key.Binding{s.Confirm, s.EndGame}
 }
 
 func (s selectPointConfirmationViewKeyMap) FullHelp() [][]key.Binding {
 	return [][]key.Binding{
-		{s.Confirm, s.Quit},
+		{s.Confirm, s.EndGame},
 	}
 }
 
@@ -37,8 +37,8 @@ func (s selectPointConfirmationView) update(msg tea.Msg, m model) (tea.Model, te
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch {
-		case key.Matches(msg, selectPointConfirmationViewKeys.Quit):
-			return showQuitConfirmationView(m)
+		case key.Matches(msg, selectPointConfirmationViewKeys.EndGame):
+			return showEndGameConfirmationView(m)
 		case key.Matches(msg, selectPointConfirmationViewKeys.Confirm):
 			matches := findMatches(m.grid)
 			if len(matches) == 0 {

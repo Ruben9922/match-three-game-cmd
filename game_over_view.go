@@ -6,6 +6,11 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
+func showGameOverView(m model, text string) (tea.Model, tea.Cmd) {
+	m.view = gameOverView{text: text}
+	return m, nil
+}
+
 type gameOverViewKeyMap struct {
 	TitleView key.Binding
 	Quit      key.Binding
@@ -32,7 +37,9 @@ func (s gameOverViewKeyMap) FullHelp() [][]key.Binding {
 	}
 }
 
-type gameOverView struct{}
+type gameOverView struct {
+	text string
+}
 
 func (g gameOverView) update(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
@@ -49,7 +56,7 @@ func (g gameOverView) update(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 }
 
 func (g gameOverView) draw(m model) string {
-	const text = "Game over!\n\nNo more moves left."
+	text := "Game over!\n\n" + g.text
 	helpView := m.help.View(gameOverViewKeys)
 	gameOverViewText := lipgloss.JoinVertical(lipgloss.Left, text, "", helpView)
 

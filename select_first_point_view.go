@@ -57,24 +57,24 @@ var selectFirstPointViewKeys = selectFirstPointViewKeyMap{
 }
 
 func (k selectFirstPointViewKeyMap) ShortHelp() []key.Binding {
-	return []key.Binding{k.Help, k.Quit}
+	return []key.Binding{k.Help, k.EndGame}
 }
 
 func (k selectFirstPointViewKeyMap) FullHelp() [][]key.Binding {
 	return [][]key.Binding{
 		{k.Up, k.Down, k.Left, k.Right},
 		{k.Select, k.ToggleHint},
-		{k.Help, k.Quit},
+		{k.Help, k.EndGame},
 	}
 }
 
 type selectFirstPointViewHintKeyMap struct {
-	Quit       key.Binding
+	EndGame    key.Binding
 	ToggleHint key.Binding
 }
 
 var selectFirstPointViewHintKeys = selectFirstPointViewHintKeyMap{
-	Quit: sharedKeys.Quit,
+	EndGame: sharedKeys.EndGame,
 	ToggleHint: key.NewBinding(
 		key.WithKeys("h"),
 		key.WithHelp("h", "hide hint"),
@@ -82,12 +82,12 @@ var selectFirstPointViewHintKeys = selectFirstPointViewHintKeyMap{
 }
 
 func (k selectFirstPointViewHintKeyMap) ShortHelp() []key.Binding {
-	return []key.Binding{k.ToggleHint, k.Quit}
+	return []key.Binding{k.ToggleHint, k.EndGame}
 }
 
 func (k selectFirstPointViewHintKeyMap) FullHelp() [][]key.Binding {
 	return [][]key.Binding{
-		{k.ToggleHint, k.Quit},
+		{k.ToggleHint, k.EndGame},
 	}
 }
 
@@ -98,8 +98,8 @@ func (s selectFirstPointView) update(msg tea.Msg, m model) (tea.Model, tea.Cmd) 
 	case tea.KeyMsg:
 		if m.showHint {
 			switch {
-			case key.Matches(msg, selectFirstPointViewHintKeys.Quit):
-				return showQuitConfirmationView(m)
+			case key.Matches(msg, selectFirstPointViewHintKeys.EndGame):
+				return showEndGameConfirmationView(m)
 			case key.Matches(msg, selectFirstPointViewHintKeys.ToggleHint):
 				m.showHint = false
 			}
@@ -107,8 +107,8 @@ func (s selectFirstPointView) update(msg tea.Msg, m model) (tea.Model, tea.Cmd) 
 		}
 
 		switch {
-		case key.Matches(msg, selectFirstPointViewKeys.Quit):
-			return showQuitConfirmationView(m)
+		case key.Matches(msg, selectFirstPointViewKeys.EndGame):
+			return showEndGameConfirmationView(m)
 		case key.Matches(msg, selectFirstPointViewKeys.Help):
 			return toggleHelp(m)
 

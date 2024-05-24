@@ -8,12 +8,12 @@ import (
 )
 
 type noPossibleMovesViewKeyMap struct {
-	Quit    key.Binding
+	EndGame key.Binding
 	Confirm key.Binding
 }
 
 var noPossibleMovesViewKeys = noPossibleMovesViewKeyMap{
-	Quit: sharedKeys.Quit,
+	EndGame: sharedKeys.EndGame,
 	Confirm: key.NewBinding(
 		key.WithKeys("enter"),
 		key.WithHelp("↵", "continue"),
@@ -21,12 +21,12 @@ var noPossibleMovesViewKeys = noPossibleMovesViewKeyMap{
 }
 
 func (s noPossibleMovesViewKeyMap) ShortHelp() []key.Binding {
-	return []key.Binding{s.Confirm, s.Quit}
+	return []key.Binding{s.Confirm, s.EndGame}
 }
 
 func (s noPossibleMovesViewKeyMap) FullHelp() [][]key.Binding {
 	return [][]key.Binding{
-		{s.Confirm, s.Quit},
+		{s.Confirm, s.EndGame},
 	}
 }
 
@@ -36,8 +36,8 @@ func (n noPossibleMovesView) update(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch {
-		case key.Matches(msg, noPossibleMovesViewKeys.Quit):
-			return showQuitConfirmationView(m)
+		case key.Matches(msg, noPossibleMovesViewKeys.EndGame):
+			return showEndGameConfirmationView(m)
 		case key.Matches(msg, noPossibleMovesViewKeys.Confirm):
 			ensurePotentialMatch(&m.grid, m.rand)
 

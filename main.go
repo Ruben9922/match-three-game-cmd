@@ -93,14 +93,14 @@ func initialModel(r *rand.Rand) model {
 }
 
 type sharedKeyMap struct {
-	Quit key.Binding
-	Help key.Binding
+	EndGame key.Binding
+	Help    key.Binding
 }
 
 var sharedKeys = sharedKeyMap{
-	Quit: key.NewBinding(
+	EndGame: key.NewBinding(
 		key.WithKeys("q"),
-		key.WithHelp("q", "quit"),
+		key.WithHelp("q", "end game"),
 	),
 	Help: key.NewBinding(
 		key.WithKeys("?", "/"), // Include "/" ("?" without pressing shift key) for convenience

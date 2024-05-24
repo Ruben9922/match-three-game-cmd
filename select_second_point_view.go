@@ -45,14 +45,14 @@ var selectSecondPointViewKeys = selectSecondPointViewKeyMap{
 }
 
 func (s selectSecondPointViewKeyMap) ShortHelp() []key.Binding {
-	return []key.Binding{s.Help, s.Quit}
+	return []key.Binding{s.Help, s.EndGame}
 }
 
 func (s selectSecondPointViewKeyMap) FullHelp() [][]key.Binding {
 	return [][]key.Binding{
 		{s.Up, s.Down, s.Left, s.Right},
 		{s.Select, s.Cancel},
-		{s.Help, s.Quit},
+		{s.Help, s.EndGame},
 	}
 }
 
@@ -62,8 +62,8 @@ func (s selectSecondPointView) update(msg tea.Msg, m model) (tea.Model, tea.Cmd)
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch {
-		case key.Matches(msg, selectSecondPointViewKeys.Quit):
-			return showQuitConfirmationView(m)
+		case key.Matches(msg, selectSecondPointViewKeys.EndGame):
+			return showEndGameConfirmationView(m)
 		case key.Matches(msg, selectSecondPointViewKeys.Help):
 			return toggleHelp(m)
 

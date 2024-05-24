@@ -14,12 +14,12 @@ func showRefreshGridView(m model) (tea.Model, tea.Cmd) {
 }
 
 type refreshGridViewKeyMap struct {
-	Quit key.Binding
-	Skip key.Binding
+	EndGame key.Binding
+	Skip    key.Binding
 }
 
 var refreshGridViewKeys = refreshGridViewKeyMap{
-	Quit: sharedKeys.Quit,
+	EndGame: sharedKeys.EndGame,
 	Skip: key.NewBinding(
 		key.WithKeys("enter"),
 		key.WithHelp("↵", "skip"),
@@ -27,12 +27,12 @@ var refreshGridViewKeys = refreshGridViewKeyMap{
 }
 
 func (r refreshGridViewKeyMap) ShortHelp() []key.Binding {
-	return []key.Binding{r.Skip, r.Quit}
+	return []key.Binding{r.Skip, r.EndGame}
 }
 
 func (r refreshGridViewKeyMap) FullHelp() [][]key.Binding {
 	return [][]key.Binding{
-		{r.Skip, r.Quit},
+		{r.Skip, r.EndGame},
 	}
 }
 
@@ -43,8 +43,8 @@ func (r refreshGridView) update(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch {
-		case key.Matches(msg, refreshGridViewKeys.Quit):
-			return showQuitConfirmationView(m)
+		case key.Matches(msg, refreshGridViewKeys.EndGame):
+			return showEndGameConfirmationView(m)
 		case key.Matches(msg, refreshGridViewKeys.Skip):
 			skipped = true
 		default:
@@ -73,8 +73,7 @@ func (r refreshGridView) update(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 
 				return showSelectFirstPointView(m)
 			} else {
-				m.view = gameOverView{}
-				return m, nil
+				return showGameOverView(m, "No more moves left.")
 			}
 		}
 

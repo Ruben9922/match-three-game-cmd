@@ -22,7 +22,10 @@ type titleViewKeyMap struct {
 }
 
 var titleViewKeys = titleViewKeyMap{
-	Quit: sharedKeys.Quit,
+	Quit: key.NewBinding(
+		key.WithKeys("q"),
+		key.WithHelp("q", "quit"),
+	),
 	ToggleGameType: key.NewBinding(
 		key.WithKeys("t"),
 		key.WithHelp("t", "change game type"),
