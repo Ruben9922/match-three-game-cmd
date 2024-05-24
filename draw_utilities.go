@@ -73,6 +73,7 @@ func createGrid(m model, selectedPoints []vector2d) string {
 	gridString := gridStyle.Render(stringBuilder.String())
 
 	scoreString := fmt.Sprintf("Score: %s", humanize.Comma(int64(m.score)))
+	movesString := fmt.Sprintf("Moves: %s", humanize.Comma(int64(m.moveCount)))
 
 	var remainingMovesString string
 	if m.options.gameType == LimitedMoves {
@@ -81,5 +82,5 @@ func createGrid(m model, selectedPoints []vector2d) string {
 		remainingMovesString = ""
 	}
 
-	return lipgloss.JoinVertical(lipgloss.Left, gridString, "", scoreString, remainingMovesString)
+	return lipgloss.JoinVertical(lipgloss.Left, gridString, "", scoreString, movesString, remainingMovesString)
 }

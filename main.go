@@ -67,6 +67,7 @@ type model struct {
 	grid               grid
 	score              int
 	options            options
+	moveCount          int
 	remainingMoveCount int
 	view               view
 	previousView       view
@@ -82,6 +83,7 @@ func initialModel(r *rand.Rand) model {
 		rand:               r,
 		score:              0,
 		options:            options{gameType: Endless},
+		moveCount:          0,
 		remainingMoveCount: moveLimit,
 		view:               titleView{},
 		point1:             emptyVector2d,
