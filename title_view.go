@@ -7,6 +7,11 @@ import (
 	"slices"
 )
 
+func showTitleView(m model) (tea.Model, tea.Cmd) {
+	m.view = titleView{}
+	return m, nil
+}
+
 type titleView struct{}
 
 type titleViewKeyMap struct {

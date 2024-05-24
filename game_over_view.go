@@ -7,23 +7,28 @@ import (
 )
 
 type gameOverViewKeyMap struct {
-	Confirm key.Binding
+	TitleView key.Binding
+	Quit      key.Binding
 }
 
 var gameOverViewKeys = gameOverViewKeyMap{
-	Confirm: key.NewBinding(
+	TitleView: key.NewBinding(
+		key.WithKeys("t"),
+		key.WithHelp("t", "title screen"),
+	),
+	Quit: key.NewBinding(
 		key.WithKeys("enter"),
 		key.WithHelp("↵", "quit"),
 	),
 }
 
 func (s gameOverViewKeyMap) ShortHelp() []key.Binding {
-	return []key.Binding{s.Confirm}
+	return []key.Binding{s.TitleView, s.Quit}
 }
 
 func (s gameOverViewKeyMap) FullHelp() [][]key.Binding {
 	return [][]key.Binding{
-		{s.Confirm},
+		{s.TitleView, s.Quit},
 	}
 }
 
@@ -32,7 +37,10 @@ type gameOverView struct{}
 func (g gameOverView) update(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
-		if key.Matches(msg, gameOverViewKeys.Confirm) {
+		switch {
+		case key.Matches(msg, gameOverViewKeys.TitleView):
+			return showTitleView(m)
+		case key.Matches(msg, gameOverViewKeys.Quit):
 			return m, tea.Quit
 		}
 	}
