@@ -77,7 +77,8 @@ func createGrid(m model, selectedPoints []vector2d) string {
 
 	var remainingMovesString string
 	if m.options.gameType == LimitedMoves {
-		remainingMovesString = fmt.Sprintf("Remaining moves: %d", m.remainingMoveCount)
+		remainingMoveCount := moveLimit - m.moveCount
+		remainingMovesString = fmt.Sprintf("Remaining moves: %d", remainingMoveCount)
 	} else {
 		remainingMovesString = ""
 	}

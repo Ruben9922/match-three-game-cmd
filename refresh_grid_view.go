@@ -61,7 +61,7 @@ func (r refreshGridView) update(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 		finished = refreshGrid(&m.grid, m.rand, &m.score)
 
 		if finished {
-			isPlaying := m.options.gameType != LimitedMoves || m.remainingMoveCount > 0
+			isPlaying := m.options.gameType != LimitedMoves || m.moveCount < moveLimit
 			if isPlaying {
 				// Check if there is a potential match; if not, then navigate to "no possible moves" view to create a new grid
 				potentialMatch := findPotentialMatch(m.grid)

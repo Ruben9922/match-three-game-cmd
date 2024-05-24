@@ -63,34 +63,32 @@ var highlightedStyle = lipgloss.NewStyle().Background(whiteColor).Foreground(bla
 var secondaryTextStyle = help.New().Styles.ShortDesc
 
 type model struct {
-	rand               *rand.Rand
-	grid               grid
-	score              int
-	options            options
-	moveCount          int
-	remainingMoveCount int
-	view               view
-	previousView       view
-	point1             vector2d
-	point2             vector2d
-	showHint           bool
-	help               help.Model
-	symbolSet          symbolSet
+	rand         *rand.Rand
+	grid         grid
+	score        int
+	options      options
+	moveCount    int
+	view         view
+	previousView view
+	point1       vector2d
+	point2       vector2d
+	showHint     bool
+	help         help.Model
+	symbolSet    symbolSet
 }
 
 func initialModel(r *rand.Rand) model {
 	return model{
-		rand:               r,
-		score:              0,
-		options:            options{gameType: Endless},
-		moveCount:          0,
-		remainingMoveCount: moveLimit,
-		view:               titleView{},
-		point1:             emptyVector2d,
-		point2:             emptyVector2d,
-		showHint:           false,
-		help:               help.New(),
-		symbolSet:          newEmojiSymbolSet(),
+		rand:      r,
+		score:     0,
+		options:   options{gameType: Endless},
+		moveCount: 0,
+		view:      titleView{},
+		point1:    emptyVector2d,
+		point2:    emptyVector2d,
+		showHint:  false,
+		help:      help.New(),
+		symbolSet: newEmojiSymbolSet(),
 	}
 }
 

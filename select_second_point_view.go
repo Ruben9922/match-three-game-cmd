@@ -77,9 +77,6 @@ func (s selectSecondPointView) update(msg tea.Msg, m model) (tea.Model, tea.Cmd)
 				m.grid = updatedGrid
 
 				m.moveCount++
-				if m.options.gameType == LimitedMoves {
-					m.remainingMoveCount--
-				}
 			}
 
 			m.view = selectPointConfirmationView{}
