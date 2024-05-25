@@ -90,22 +90,6 @@ func initialModel(r *rand.Rand) model {
 	}
 }
 
-type sharedKeyMap struct {
-	EndGame key.Binding
-	Help    key.Binding
-}
-
-var sharedKeys = sharedKeyMap{
-	EndGame: key.NewBinding(
-		key.WithKeys("q"),
-		key.WithHelp("q", "end game"),
-	),
-	Help: key.NewBinding(
-		key.WithKeys("?", "/"), // Include "/" ("?" without pressing shift key) for convenience
-		key.WithHelp("?", "show/hide controls"),
-	),
-}
-
 type tickMsg time.Time
 
 // TODO: Add different game modes - e.g. endless, timed, limited number of moves
@@ -134,9 +118,25 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func toggleHelp(m model) (tea.Model, tea.Cmd) {
-	m.help.ShowAll = !m.help.ShowAll
-	return m, nil
+func newEndGameKeyBinding() key.Binding {
+	return key.NewBinding(
+		key.WithKeys("q"),
+		key.WithHelp("q", "end game"),
+	)
+}
+
+func newHelpKeyBinding(m model) key.Binding {
+	var helpKeyDescription string
+	if m.help.ShowAll {
+		helpKeyDescription = "hide controls"
+	} else {
+		helpKeyDescription = "show controls"
+	}
+
+	return key.NewBinding(
+		key.WithKeys("?", "/"), // Include "/" ("?" without pressing shift key) for convenience
+		key.WithHelp("?", helpKeyDescription),
+	)
 }
 
 func (m model) View() string {

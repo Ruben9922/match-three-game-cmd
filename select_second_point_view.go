@@ -6,42 +6,56 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-type selectSecondPointViewKeyMap struct {
-	sharedKeyMap
-	Select key.Binding
-	Cancel key.Binding
-	Up     key.Binding
-	Down   key.Binding
-	Left   key.Binding
-	Right  key.Binding
+func showSelectSecondPointView(m model) (tea.Model, tea.Cmd) {
+	m.help.ShowAll = false // Important that this is updated before creating the view
+	m.point2 = getInitialPoint2(m.point1)
+
+	s := newSelectSecondPointView(m)
+	m.view = &s
+
+	return m, nil
 }
 
-var selectSecondPointViewKeys = selectSecondPointViewKeyMap{
-	sharedKeyMap: sharedKeys,
-	Select: key.NewBinding(
-		key.WithKeys("enter"),
-		key.WithHelp("↵", "select"),
-	),
-	Cancel: key.NewBinding(
-		key.WithKeys("escape"),
-		key.WithHelp("esc", "cancel"),
-	),
-	Up: key.NewBinding(
-		key.WithKeys("up", "w"),
-		key.WithHelp("↑/w", "up"),
-	),
-	Down: key.NewBinding(
-		key.WithKeys("down", "s"),
-		key.WithHelp("↓/s", "down"),
-	),
-	Left: key.NewBinding(
-		key.WithKeys("left", "a"),
-		key.WithHelp("←/a", "left"),
-	),
-	Right: key.NewBinding(
-		key.WithKeys("right", "d"),
-		key.WithHelp("→/d", "right"),
-	),
+type selectSecondPointViewKeyMap struct {
+	EndGame key.Binding
+	Help    key.Binding
+	Select  key.Binding
+	Cancel  key.Binding
+	Up      key.Binding
+	Down    key.Binding
+	Left    key.Binding
+	Right   key.Binding
+}
+
+func newSelectSecondPointViewKeys(m model) selectSecondPointViewKeyMap {
+	return selectSecondPointViewKeyMap{
+		EndGame: newEndGameKeyBinding(),
+		Help:    newHelpKeyBinding(m),
+		Select: key.NewBinding(
+			key.WithKeys("enter"),
+			key.WithHelp("↵", "select"),
+		),
+		Cancel: key.NewBinding(
+			key.WithKeys("escape"),
+			key.WithHelp("esc", "cancel"),
+		),
+		Up: key.NewBinding(
+			key.WithKeys("up", "w"),
+			key.WithHelp("↑/w", "up"),
+		),
+		Down: key.NewBinding(
+			key.WithKeys("down", "s"),
+			key.WithHelp("↓/s", "down"),
+		),
+		Left: key.NewBinding(
+			key.WithKeys("left", "a"),
+			key.WithHelp("←/a", "left"),
+		),
+		Right: key.NewBinding(
+			key.WithKeys("right", "d"),
+			key.WithHelp("→/d", "right"),
+		),
+	}
 }
 
 func (s selectSecondPointViewKeyMap) ShortHelp() []key.Binding {
@@ -56,18 +70,26 @@ func (s selectSecondPointViewKeyMap) FullHelp() [][]key.Binding {
 	}
 }
 
-type selectSecondPointView struct{}
+type selectSecondPointView struct {
+	keys selectSecondPointViewKeyMap
+}
 
-func (s selectSecondPointView) update(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
+func newSelectSecondPointView(m model) selectSecondPointView {
+	return selectSecondPointView{
+		keys: newSelectSecondPointViewKeys(m),
+	}
+}
+
+func (s *selectSecondPointView) update(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch {
-		case key.Matches(msg, selectSecondPointViewKeys.EndGame):
+		case key.Matches(msg, s.keys.EndGame):
 			return showEndGameConfirmationView(m)
-		case key.Matches(msg, selectSecondPointViewKeys.Help):
-			return toggleHelp(m)
+		case key.Matches(msg, s.keys.Help):
+			return s.toggleHelp(m)
 
-		case key.Matches(msg, selectSecondPointViewKeys.Select):
+		case key.Matches(msg, s.keys.Select):
 			// Swap the points, if it would result in a match
 			updatedGrid := m.grid
 			updatedGrid[m.point1.y][m.point1.x], updatedGrid[m.point2.y][m.point2.x] =
@@ -79,33 +101,29 @@ func (s selectSecondPointView) update(msg tea.Msg, m model) (tea.Model, tea.Cmd)
 				m.moveCount++
 			}
 
-			m.view = selectPointConfirmationView{}
-			m.help.ShowAll = false
-
-			return m, nil
-
-		case key.Matches(msg, selectSecondPointViewKeys.Cancel):
+			return showSelectPointConfirmationView(m)
+		case key.Matches(msg, s.keys.Cancel):
 			return showSelectFirstPointView(m)
 		}
 
 		var point2Updated vector2d
 		switch {
-		case key.Matches(msg, selectSecondPointViewKeys.Up):
+		case key.Matches(msg, s.keys.Up):
 			point2Updated = vector2d{
 				x: m.point1.x,
 				y: m.point1.y - 1,
 			}
-		case key.Matches(msg, selectSecondPointViewKeys.Down):
+		case key.Matches(msg, s.keys.Down):
 			point2Updated = vector2d{
 				x: m.point1.x,
 				y: m.point1.y + 1,
 			}
-		case key.Matches(msg, selectSecondPointViewKeys.Left):
+		case key.Matches(msg, s.keys.Left):
 			point2Updated = vector2d{
 				x: m.point1.x - 1,
 				y: m.point1.y,
 			}
-		case key.Matches(msg, selectSecondPointViewKeys.Right):
+		case key.Matches(msg, s.keys.Right):
 			point2Updated = vector2d{
 				x: m.point1.x + 1,
 				y: m.point1.y,
@@ -121,9 +139,20 @@ func (s selectSecondPointView) update(msg tea.Msg, m model) (tea.Model, tea.Cmd)
 	return m, nil
 }
 
-func (s selectSecondPointView) draw(m model) string {
+// todo: combine the two copies of this function (?)
+func (s *selectSecondPointView) toggleHelp(m model) (tea.Model, tea.Cmd) {
+	// Toggle between short and full help in help view
+	m.help.ShowAll = !m.help.ShowAll
+
+	// Update help key so the description ("show controls"/"hide controls") is updated accordingly
+	s.keys.Help = newHelpKeyBinding(m)
+
+	return m, nil
+}
+
+func (s *selectSecondPointView) draw(m model) string {
 	const text = "Select two points to swap (selecting point 2)..."
-	helpView := m.help.View(selectSecondPointViewKeys)
+	helpView := m.help.View(s.keys)
 	selectSecondPointText := lipgloss.JoinVertical(lipgloss.Left, text, "", helpView)
 
 	gridText := createGrid(m, []vector2d{m.point1, m.point2})

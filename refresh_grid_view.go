@@ -7,7 +7,7 @@ import (
 )
 
 func showRefreshGridView(m model) (tea.Model, tea.Cmd) {
-	m.view = refreshGridView{}
+	m.view = newRefreshGridView()
 	m.point1 = emptyVector2d
 	m.point2 = emptyVector2d
 	m.help.ShowAll = false
@@ -20,12 +20,14 @@ type refreshGridViewKeyMap struct {
 	Skip    key.Binding
 }
 
-var refreshGridViewKeys = refreshGridViewKeyMap{
-	EndGame: sharedKeys.EndGame,
-	Skip: key.NewBinding(
-		key.WithKeys("enter"),
-		key.WithHelp("↵", "skip"),
-	),
+func newRefreshGridViewKeys() refreshGridViewKeyMap {
+	return refreshGridViewKeyMap{
+		EndGame: newEndGameKeyBinding(),
+		Skip: key.NewBinding(
+			key.WithKeys("enter"),
+			key.WithHelp("↵", "skip"),
+		),
+	}
 }
 
 func (r refreshGridViewKeyMap) ShortHelp() []key.Binding {
@@ -38,16 +40,24 @@ func (r refreshGridViewKeyMap) FullHelp() [][]key.Binding {
 	}
 }
 
-type refreshGridView struct{}
+type refreshGridView struct {
+	keys refreshGridViewKeyMap
+}
+
+func newRefreshGridView() refreshGridView {
+	return refreshGridView{
+		keys: newRefreshGridViewKeys(),
+	}
+}
 
 func (r refreshGridView) update(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 	var skipped bool
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch {
-		case key.Matches(msg, refreshGridViewKeys.EndGame):
+		case key.Matches(msg, r.keys.EndGame):
 			return showEndGameConfirmationView(m)
-		case key.Matches(msg, refreshGridViewKeys.Skip):
+		case key.Matches(msg, r.keys.Skip):
 			skipped = true
 		default:
 			return m, nil
@@ -68,10 +78,7 @@ func (r refreshGridView) update(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 				// Check if there is a potential match; if not, then navigate to "no possible moves" view to create a new grid
 				potentialMatch := findPotentialMatch(m.grid)
 				if len(potentialMatch) == 0 {
-					m.view = noPossibleMovesView{}
-					m.help.ShowAll = false
-
-					return m, nil
+					showNoPossibleMovesView(m)
 				}
 
 				return showSelectFirstPointView(m)
@@ -88,7 +95,7 @@ func (r refreshGridView) update(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 
 func (r refreshGridView) draw(m model) string {
 	const text = "Refreshing grid..."
-	helpView := m.help.View(refreshGridViewKeys)
+	helpView := m.help.View(r.keys)
 	refreshGridText := lipgloss.JoinVertical(lipgloss.Left, text, "", helpView)
 
 	gridText := createGrid(m, []vector2d{m.point1, m.point2})

@@ -7,17 +7,26 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
+func showNoPossibleMovesView(m model) (tea.Model, tea.Cmd) {
+	m.view = newNoPossibleMovesView()
+	m.help.ShowAll = false
+
+	return m, nil
+}
+
 type noPossibleMovesViewKeyMap struct {
 	EndGame key.Binding
 	Confirm key.Binding
 }
 
-var noPossibleMovesViewKeys = noPossibleMovesViewKeyMap{
-	EndGame: sharedKeys.EndGame,
-	Confirm: key.NewBinding(
-		key.WithKeys("enter"),
-		key.WithHelp("↵", "continue"),
-	),
+func newNoPossibleMovesViewKeys() noPossibleMovesViewKeyMap {
+	return noPossibleMovesViewKeyMap{
+		EndGame: newEndGameKeyBinding(),
+		Confirm: key.NewBinding(
+			key.WithKeys("enter"),
+			key.WithHelp("↵", "continue"),
+		),
+	}
 }
 
 func (s noPossibleMovesViewKeyMap) ShortHelp() []key.Binding {
@@ -30,15 +39,23 @@ func (s noPossibleMovesViewKeyMap) FullHelp() [][]key.Binding {
 	}
 }
 
-type noPossibleMovesView struct{}
+type noPossibleMovesView struct {
+	keys noPossibleMovesViewKeyMap
+}
+
+func newNoPossibleMovesView() noPossibleMovesView {
+	return noPossibleMovesView{
+		keys: newNoPossibleMovesViewKeys(),
+	}
+}
 
 func (n noPossibleMovesView) update(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch {
-		case key.Matches(msg, noPossibleMovesViewKeys.EndGame):
+		case key.Matches(msg, n.keys.EndGame):
 			return showEndGameConfirmationView(m)
-		case key.Matches(msg, noPossibleMovesViewKeys.Confirm):
+		case key.Matches(msg, n.keys.Confirm):
 			ensurePotentialMatch(&m.grid, m.rand)
 
 			return showSelectFirstPointView(m)
@@ -50,8 +67,8 @@ func (n noPossibleMovesView) update(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 
 func (n noPossibleMovesView) draw(m model) string {
 	text := fmt.Sprintf("No more possible moves\n\nPress %s to generate a new grid...",
-		lipgloss.NewStyle().Bold(true).Render(noPossibleMovesViewKeys.Confirm.Help().Key))
-	helpView := m.help.View(noPossibleMovesViewKeys)
+		lipgloss.NewStyle().Bold(true).Render(n.keys.Confirm.Help().Key))
+	helpView := m.help.View(n.keys)
 	noMorePossibleMovesText := lipgloss.JoinVertical(lipgloss.Left, text, "", helpView)
 
 	gridText := createGrid(m, []vector2d{m.point1, m.point2})

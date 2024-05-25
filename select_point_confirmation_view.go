@@ -8,17 +8,26 @@ import (
 	"github.com/dustin/go-humanize/english"
 )
 
+func showSelectPointConfirmationView(m model) (tea.Model, tea.Cmd) {
+	m.view = newSelectPointConfirmationView()
+	m.help.ShowAll = false
+
+	return m, nil
+}
+
 type selectPointConfirmationViewKeyMap struct {
 	EndGame key.Binding
 	Confirm key.Binding
 }
 
-var selectPointConfirmationViewKeys = selectPointConfirmationViewKeyMap{
-	EndGame: sharedKeys.EndGame,
-	Confirm: key.NewBinding(
-		key.WithKeys("enter"),
-		key.WithHelp("↵", "continue"),
-	),
+func newSelectPointConfirmationViewKeys() selectPointConfirmationViewKeyMap {
+	return selectPointConfirmationViewKeyMap{
+		EndGame: newEndGameKeyBinding(),
+		Confirm: key.NewBinding(
+			key.WithKeys("enter"),
+			key.WithHelp("↵", "continue"),
+		),
+	}
 }
 
 func (s selectPointConfirmationViewKeyMap) ShortHelp() []key.Binding {
@@ -31,15 +40,23 @@ func (s selectPointConfirmationViewKeyMap) FullHelp() [][]key.Binding {
 	}
 }
 
-type selectPointConfirmationView struct{}
+type selectPointConfirmationView struct {
+	keys selectPointConfirmationViewKeyMap
+}
+
+func newSelectPointConfirmationView() selectPointConfirmationView {
+	return selectPointConfirmationView{
+		keys: newSelectPointConfirmationViewKeys(),
+	}
+}
 
 func (s selectPointConfirmationView) update(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch {
-		case key.Matches(msg, selectPointConfirmationViewKeys.EndGame):
+		case key.Matches(msg, s.keys.EndGame):
 			return showEndGameConfirmationView(m)
-		case key.Matches(msg, selectPointConfirmationViewKeys.Confirm):
+		case key.Matches(msg, s.keys.Confirm):
 			matches := findMatches(m.grid)
 			if len(matches) == 0 {
 				return returnToSelectFirstPointView(m)
@@ -72,7 +89,7 @@ func (s selectPointConfirmationView) draw(m model) string {
 		text = "Not swapping as swap would not result in a match.\nPlease try again."
 		selectedPoints = []vector2d{m.point1, m.point2}
 	}
-	helpView := m.help.View(selectPointConfirmationViewKeys)
+	helpView := m.help.View(s.keys)
 	selectPointConfirmationText := lipgloss.JoinVertical(lipgloss.Left, text, "", helpView)
 
 	gridText := createGrid(m, selectedPoints)

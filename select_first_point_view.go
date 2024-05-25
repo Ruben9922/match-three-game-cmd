@@ -8,22 +8,27 @@ import (
 )
 
 func showSelectFirstPointView(m model) (tea.Model, tea.Cmd) {
-	m.view = &selectFirstPointView{showHint: false}
+	m.help.ShowAll = false                                   // Important that this is updated before creating the view
 	m.point1 = vector2d{x: gridWidth / 2, y: gridHeight / 2} // Initialise point 1 to centre of grid
-	m.help.ShowAll = false
+
+	s := newSelectFirstPointView(m)
+	m.view = &s
 
 	return m, nil
 }
 
 func returnToSelectFirstPointView(m model) (tea.Model, tea.Cmd) {
-	m.view = &selectFirstPointView{showHint: false}
-	m.help.ShowAll = false
+	m.help.ShowAll = false // Important that this is updated before creating the view
+
+	s := newSelectFirstPointView(m)
+	m.view = &s
 
 	return m, nil
 }
 
 type selectFirstPointViewKeyMap struct {
-	sharedKeyMap
+	EndGame    key.Binding
+	Help       key.Binding
 	Select     key.Binding
 	ToggleHint key.Binding
 	Up         key.Binding
@@ -32,32 +37,35 @@ type selectFirstPointViewKeyMap struct {
 	Right      key.Binding
 }
 
-var selectFirstPointViewKeys = selectFirstPointViewKeyMap{
-	sharedKeyMap: sharedKeys,
-	Select: key.NewBinding(
-		key.WithKeys("enter"),
-		key.WithHelp("↵", "select"),
-	),
-	ToggleHint: key.NewBinding(
-		key.WithKeys("h"),
-		key.WithHelp("h", "show hint"),
-	),
-	Up: key.NewBinding(
-		key.WithKeys("up", "w"),
-		key.WithHelp("↑/w", "up"),
-	),
-	Down: key.NewBinding(
-		key.WithKeys("down", "s"),
-		key.WithHelp("↓/s", "down"),
-	),
-	Left: key.NewBinding(
-		key.WithKeys("left", "a"),
-		key.WithHelp("←/a", "left"),
-	),
-	Right: key.NewBinding(
-		key.WithKeys("right", "d"),
-		key.WithHelp("→/d", "right"),
-	),
+func newSelectFirstPointViewKeys(m model) selectFirstPointViewKeyMap {
+	return selectFirstPointViewKeyMap{
+		EndGame: newEndGameKeyBinding(),
+		Help:    newHelpKeyBinding(m),
+		Select: key.NewBinding(
+			key.WithKeys("enter"),
+			key.WithHelp("↵", "select"),
+		),
+		ToggleHint: key.NewBinding(
+			key.WithKeys("h"),
+			key.WithHelp("h", "show hint"),
+		),
+		Up: key.NewBinding(
+			key.WithKeys("up", "w"),
+			key.WithHelp("↑/w", "up"),
+		),
+		Down: key.NewBinding(
+			key.WithKeys("down", "s"),
+			key.WithHelp("↓/s", "down"),
+		),
+		Left: key.NewBinding(
+			key.WithKeys("left", "a"),
+			key.WithHelp("←/a", "left"),
+		),
+		Right: key.NewBinding(
+			key.WithKeys("right", "d"),
+			key.WithHelp("→/d", "right"),
+		),
+	}
 }
 
 func (k selectFirstPointViewKeyMap) ShortHelp() []key.Binding {
@@ -77,12 +85,14 @@ type selectFirstPointViewHintKeyMap struct {
 	ToggleHint key.Binding
 }
 
-var selectFirstPointViewHintKeys = selectFirstPointViewHintKeyMap{
-	EndGame: sharedKeys.EndGame,
-	ToggleHint: key.NewBinding(
-		key.WithKeys("h"),
-		key.WithHelp("h", "hide hint"),
-	),
+func newSelectFirstPointViewHintKeys() selectFirstPointViewHintKeyMap {
+	return selectFirstPointViewHintKeyMap{
+		EndGame: newEndGameKeyBinding(),
+		ToggleHint: key.NewBinding(
+			key.WithKeys("h"),
+			key.WithHelp("h", "hide hint"),
+		),
+	}
 }
 
 func (k selectFirstPointViewHintKeyMap) ShortHelp() []key.Binding {
@@ -97,6 +107,16 @@ func (k selectFirstPointViewHintKeyMap) FullHelp() [][]key.Binding {
 
 type selectFirstPointView struct {
 	showHint bool
+	keys     selectFirstPointViewKeyMap
+	hintKeys selectFirstPointViewHintKeyMap
+}
+
+func newSelectFirstPointView(m model) selectFirstPointView {
+	return selectFirstPointView{
+		showHint: false,
+		keys:     newSelectFirstPointViewKeys(m),
+		hintKeys: newSelectFirstPointViewHintKeys(),
+	}
 }
 
 func (s *selectFirstPointView) update(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
@@ -104,42 +124,51 @@ func (s *selectFirstPointView) update(msg tea.Msg, m model) (tea.Model, tea.Cmd)
 	case tea.KeyMsg:
 		if s.showHint {
 			switch {
-			case key.Matches(msg, selectFirstPointViewHintKeys.EndGame):
+			case key.Matches(msg, s.hintKeys.EndGame):
 				return showEndGameConfirmationView(m)
-			case key.Matches(msg, selectFirstPointViewHintKeys.ToggleHint):
+			case key.Matches(msg, s.hintKeys.ToggleHint):
 				s.showHint = false
 			}
 			return m, nil
 		}
 
 		switch {
-		case key.Matches(msg, selectFirstPointViewKeys.EndGame):
+		case key.Matches(msg, s.keys.EndGame):
 			return showEndGameConfirmationView(m)
-		case key.Matches(msg, selectFirstPointViewKeys.Help):
-			return toggleHelp(m)
+		case key.Matches(msg, s.keys.Help):
+			return s.toggleHelp(m)
 
-		case key.Matches(msg, selectFirstPointViewKeys.ToggleHint):
+		case key.Matches(msg, s.keys.ToggleHint):
 			s.showHint = true
 
-		case key.Matches(msg, selectFirstPointViewKeys.Select):
-			m.view = selectSecondPointView{}
-			m.point2 = getInitialPoint2(m.point1)
-			m.help.ShowAll = false
+		case key.Matches(msg, s.keys.Select):
+			return showSelectSecondPointView(m)
 
-		case key.Matches(msg, selectFirstPointViewKeys.Up):
+		case key.Matches(msg, s.keys.Up):
 			m.point1.y--
 			m.point1.y = (m.point1.y + gridHeight) % gridHeight // Clamp y coordinate between 0 and gridHeight - 1
-		case key.Matches(msg, selectFirstPointViewKeys.Down):
+		case key.Matches(msg, s.keys.Down):
 			m.point1.y++
 			m.point1.y = (m.point1.y + gridHeight) % gridHeight // Clamp y coordinate between 0 and gridHeight - 1
-		case key.Matches(msg, selectFirstPointViewKeys.Left):
+		case key.Matches(msg, s.keys.Left):
 			m.point1.x--
 			m.point1.x = (m.point1.x + gridWidth) % gridWidth // Clamp x coordinate between 0 and gridWidth - 1
-		case key.Matches(msg, selectFirstPointViewKeys.Right):
+		case key.Matches(msg, s.keys.Right):
 			m.point1.x++
 			m.point1.x = (m.point1.x + gridWidth) % gridWidth // Clamp x coordinate between 0 and gridWidth - 1
 		}
 	}
+
+	return m, nil
+}
+
+// todo: combine the two copies of this function (?)
+func (s *selectFirstPointView) toggleHelp(m model) (tea.Model, tea.Cmd) {
+	// Toggle between short and full help in help view
+	m.help.ShowAll = !m.help.ShowAll
+
+	// Update help key so the description ("show controls"/"hide controls") is updated accordingly
+	s.keys.Help = newHelpKeyBinding(m)
 
 	return m, nil
 }
@@ -169,9 +198,9 @@ func (s *selectFirstPointView) draw(m model) string {
 	const text = "Select two points to swap (selecting point 1)..."
 	var keys help.KeyMap
 	if s.showHint {
-		keys = selectFirstPointViewHintKeys
+		keys = s.hintKeys
 	} else {
-		keys = selectFirstPointViewKeys
+		keys = s.keys
 	}
 	helpView := m.help.View(keys)
 	selectFirstPointText := lipgloss.JoinVertical(lipgloss.Left, text, "", helpView)
