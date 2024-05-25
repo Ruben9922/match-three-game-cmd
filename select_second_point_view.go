@@ -80,6 +80,8 @@ func (s selectSecondPointView) update(msg tea.Msg, m model) (tea.Model, tea.Cmd)
 			}
 
 			m.view = selectPointConfirmationView{}
+			m.help.ShowAll = false
+
 			return m, nil
 
 		case key.Matches(msg, selectSecondPointViewKeys.Cancel):

@@ -8,6 +8,8 @@ import (
 
 func showGameOverView(m model, text string) (tea.Model, tea.Cmd) {
 	m.view = gameOverView{text: text}
+	m.help.ShowAll = false
+
 	return m, nil
 }
 

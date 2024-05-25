@@ -9,6 +9,8 @@ import (
 
 func showTitleView(m model) (tea.Model, tea.Cmd) {
 	m.view = titleView{}
+	m.help.ShowAll = false
+
 	return m, nil
 }
 

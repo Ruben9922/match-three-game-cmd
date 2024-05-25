@@ -10,6 +10,8 @@ func showRefreshGridView(m model) (tea.Model, tea.Cmd) {
 	m.view = refreshGridView{}
 	m.point1 = emptyVector2d
 	m.point2 = emptyVector2d
+	m.help.ShowAll = false
+
 	return m, tickCmd()
 }
 
@@ -67,6 +69,7 @@ func (r refreshGridView) update(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 				potentialMatch := findPotentialMatch(m.grid)
 				if len(potentialMatch) == 0 {
 					m.view = noPossibleMovesView{}
+					m.help.ShowAll = false
 
 					return m, nil
 				}

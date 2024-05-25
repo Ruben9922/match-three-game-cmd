@@ -10,11 +10,15 @@ import (
 func showSelectFirstPointView(m model) (tea.Model, tea.Cmd) {
 	m.view = &selectFirstPointView{showHint: false}
 	m.point1 = vector2d{x: gridWidth / 2, y: gridHeight / 2} // Initialise point 1 to centre of grid
+	m.help.ShowAll = false
+
 	return m, nil
 }
 
 func returnToSelectFirstPointView(m model) (tea.Model, tea.Cmd) {
 	m.view = &selectFirstPointView{showHint: false}
+	m.help.ShowAll = false
+
 	return m, nil
 }
 
@@ -120,6 +124,7 @@ func (s *selectFirstPointView) update(msg tea.Msg, m model) (tea.Model, tea.Cmd)
 		case key.Matches(msg, selectFirstPointViewKeys.Select):
 			m.view = selectSecondPointView{}
 			m.point2 = getInitialPoint2(m.point1)
+			m.help.ShowAll = false
 
 		case key.Matches(msg, selectFirstPointViewKeys.Up):
 			m.point1.y--
