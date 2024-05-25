@@ -72,7 +72,6 @@ type model struct {
 	previousView view
 	point1       vector2d
 	point2       vector2d
-	showHint     bool
 	help         help.Model
 	symbolSet    symbolSet
 }
@@ -86,7 +85,6 @@ func initialModel(r *rand.Rand) model {
 		view:      titleView{},
 		point1:    emptyVector2d,
 		point2:    emptyVector2d,
-		showHint:  false,
 		help:      help.New(),
 		symbolSet: newEmojiSymbolSet(),
 	}

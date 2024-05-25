@@ -8,13 +8,13 @@ import (
 )
 
 func showSelectFirstPointView(m model) (tea.Model, tea.Cmd) {
-	m.view = selectFirstPointView{}
+	m.view = &selectFirstPointView{showHint: false}
 	m.point1 = vector2d{x: gridWidth / 2, y: gridHeight / 2} // Initialise point 1 to centre of grid
 	return m, nil
 }
 
 func returnToSelectFirstPointView(m model) (tea.Model, tea.Cmd) {
-	m.view = selectFirstPointView{}
+	m.view = &selectFirstPointView{showHint: false}
 	return m, nil
 }
 
@@ -91,17 +91,19 @@ func (k selectFirstPointViewHintKeyMap) FullHelp() [][]key.Binding {
 	}
 }
 
-type selectFirstPointView struct{}
+type selectFirstPointView struct {
+	showHint bool
+}
 
-func (s selectFirstPointView) update(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
+func (s *selectFirstPointView) update(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
-		if m.showHint {
+		if s.showHint {
 			switch {
 			case key.Matches(msg, selectFirstPointViewHintKeys.EndGame):
 				return showEndGameConfirmationView(m)
 			case key.Matches(msg, selectFirstPointViewHintKeys.ToggleHint):
-				m.showHint = false
+				s.showHint = false
 			}
 			return m, nil
 		}
@@ -113,7 +115,7 @@ func (s selectFirstPointView) update(msg tea.Msg, m model) (tea.Model, tea.Cmd) 
 			return toggleHelp(m)
 
 		case key.Matches(msg, selectFirstPointViewKeys.ToggleHint):
-			m.showHint = true
+			s.showHint = true
 
 		case key.Matches(msg, selectFirstPointViewKeys.Select):
 			m.view = selectSecondPointView{}
@@ -158,10 +160,10 @@ func getInitialPoint2(point1 vector2d) vector2d {
 	}
 }
 
-func (s selectFirstPointView) draw(m model) string {
+func (s *selectFirstPointView) draw(m model) string {
 	const text = "Select two points to swap (selecting point 1)..."
 	var keys help.KeyMap
-	if m.showHint {
+	if s.showHint {
 		keys = selectFirstPointViewHintKeys
 	} else {
 		keys = selectFirstPointViewKeys
@@ -170,7 +172,7 @@ func (s selectFirstPointView) draw(m model) string {
 	selectFirstPointText := lipgloss.JoinVertical(lipgloss.Left, text, "", helpView)
 
 	var selectedPoints []vector2d
-	if m.showHint {
+	if s.showHint {
 		selectedPoints = findPotentialMatch(m.grid)
 	} else {
 		selectedPoints = []vector2d{m.point1}
