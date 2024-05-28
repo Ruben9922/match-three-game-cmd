@@ -101,7 +101,7 @@ func (m model) Init() tea.Cmd {
 }
 
 func tickCmd() tea.Cmd {
-	return tea.Tick(150*time.Millisecond, func(t time.Time) tea.Msg {
+	return tea.Tick(180*time.Millisecond, func(t time.Time) tea.Msg {
 		return tickMsg(t)
 	})
 }
