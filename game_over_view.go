@@ -60,7 +60,7 @@ func (g gameOverView) update(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 func (g gameOverView) draw(m model) string {
 	text := "Game over!\n\n" + g.text
 	gridText := drawGrid(m, []vector2d{})
-	m.help.Width = m.windowSize.x - lipgloss.Width(gridText) - 8
+	m.help.Width = m.windowSize.x - lipgloss.Width(gridText) - 8 - 3
 	helpView := m.help.View(gameOverViewKeys)
 	gameOverText := lipgloss.JoinVertical(lipgloss.Left, text, "", helpView)
 	gridLayoutText := drawGridLayout(m, gridText, gameOverText)

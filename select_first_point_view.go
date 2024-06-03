@@ -209,7 +209,7 @@ func (s *selectFirstPointView) draw(m model) string {
 	} else {
 		keys = s.keys
 	}
-	m.help.Width = m.windowSize.x - lipgloss.Width(gridText) - 8
+	m.help.Width = m.windowSize.x - lipgloss.Width(gridText) - 8 - 3
 	helpView := m.help.View(keys)
 	selectFirstPointText := lipgloss.JoinVertical(lipgloss.Left, text, "", helpView)
 

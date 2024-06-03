@@ -69,7 +69,7 @@ func (n noPossibleMovesView) draw(m model) string {
 	text := fmt.Sprintf("No more possible moves\n\nPress %s to generate a new grid...",
 		lipgloss.NewStyle().Bold(true).Render(n.keys.Confirm.Help().Key))
 	gridText := drawGrid(m, []vector2d{m.point1, m.point2})
-	m.help.Width = m.windowSize.x - lipgloss.Width(gridText) - 8
+	m.help.Width = m.windowSize.x - lipgloss.Width(gridText) - 8 - 3
 	helpView := m.help.View(n.keys)
 	noMorePossibleMovesText := lipgloss.JoinVertical(lipgloss.Left, text, "", helpView)
 	gridLayoutText := drawGridLayout(m, gridText, noMorePossibleMovesText)
