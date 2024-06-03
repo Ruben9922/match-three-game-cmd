@@ -211,7 +211,7 @@ func (s *selectFirstPointView) draw(m model) string {
 	} else {
 		selectedPoints = []vector2d{m.point1}
 	}
-	gridText := createGrid(m, selectedPoints)
+	gridText := drawGrid(m, selectedPoints)
 
 	return lipgloss.JoinHorizontal(
 		lipgloss.Top,

@@ -40,7 +40,7 @@ func drawRadioButtons[T radioButtonItem](options []T, selected T, label string, 
 	return builder.String()
 }
 
-func createGrid(m model, selectedPoints []vector2d) string {
+func drawGrid(m model, selectedPoints []vector2d) string {
 	var stringBuilder strings.Builder
 	for y, row := range m.grid {
 		for x, symbol := range row {

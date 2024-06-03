@@ -155,7 +155,7 @@ func (s *selectSecondPointView) draw(m model) string {
 	helpView := m.help.View(s.keys)
 	selectSecondPointText := lipgloss.JoinVertical(lipgloss.Left, text, "", helpView)
 
-	gridText := createGrid(m, []vector2d{m.point1, m.point2})
+	gridText := drawGrid(m, []vector2d{m.point1, m.point2})
 
 	return lipgloss.JoinHorizontal(
 		lipgloss.Top,

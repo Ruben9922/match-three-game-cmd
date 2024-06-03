@@ -92,7 +92,7 @@ func (s selectPointConfirmationView) draw(m model) string {
 	helpView := m.help.View(s.keys)
 	selectPointConfirmationText := lipgloss.JoinVertical(lipgloss.Left, text, "", helpView)
 
-	gridText := createGrid(m, selectedPoints)
+	gridText := drawGrid(m, selectedPoints)
 
 	return lipgloss.JoinHorizontal(
 		lipgloss.Top,

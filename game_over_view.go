@@ -62,7 +62,7 @@ func (g gameOverView) draw(m model) string {
 	helpView := m.help.View(gameOverViewKeys)
 	gameOverViewText := lipgloss.JoinVertical(lipgloss.Left, text, "", helpView)
 
-	gridText := createGrid(m, []vector2d{})
+	gridText := drawGrid(m, []vector2d{})
 
 	return lipgloss.JoinHorizontal(
 		lipgloss.Top,
