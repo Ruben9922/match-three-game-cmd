@@ -64,8 +64,7 @@ func (s selectSecondPointViewKeyMap) ShortHelp() []key.Binding {
 
 func (s selectSecondPointViewKeyMap) FullHelp() [][]key.Binding {
 	return [][]key.Binding{
-		{s.Up, s.Down, s.Left, s.Right},
-		{s.Select, s.Cancel},
+		{s.Up, s.Down, s.Left, s.Right, s.Select, s.Cancel},
 		{s.Help, s.EndGame},
 	}
 }

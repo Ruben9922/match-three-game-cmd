@@ -74,8 +74,7 @@ func (k selectFirstPointViewKeyMap) ShortHelp() []key.Binding {
 
 func (k selectFirstPointViewKeyMap) FullHelp() [][]key.Binding {
 	return [][]key.Binding{
-		{k.Up, k.Down, k.Left, k.Right},
-		{k.Select, k.ToggleHint},
+		{k.Up, k.Down, k.Left, k.Right, k.Select, k.ToggleHint},
 		{k.Help, k.EndGame},
 	}
 }
