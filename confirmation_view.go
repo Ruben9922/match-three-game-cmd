@@ -56,6 +56,7 @@ func (c confirmationView) update(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 }
 
 func (c confirmationView) draw(m model) string {
+	m.help.Width = m.windowSize.x - 8
 	helpView := m.help.View(c.keys)
 	return lipgloss.NewStyle().
 		Width(m.windowSize.x - 8).

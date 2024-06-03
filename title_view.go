@@ -62,6 +62,7 @@ func (tv titleView) draw(m model) string {
 
 	gameTypeRadioButtons := drawRadioButtons(gameTypes, m.options.gameType, "Game type", titleViewKeys.ToggleGameType)
 	symbolSetRadioButtons := drawRadioButtons(symbolSets, m.symbolSet, "Symbol set", titleViewKeys.ToggleSymbolSet)
+	m.help.Width = m.windowSize.x - 8
 	helpView := m.help.View(titleViewKeys)
 	return lipgloss.JoinVertical(lipgloss.Center,
 		titlePart1,

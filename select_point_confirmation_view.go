@@ -89,10 +89,12 @@ func (s selectPointConfirmationView) draw(m model) string {
 		text = "Not swapping as swap would not result in a match.\nPlease try again."
 		selectedPoints = []vector2d{m.point1, m.point2}
 	}
+
+	gridText := drawGrid(m, selectedPoints)
+	m.help.Width = m.windowSize.x - lipgloss.Width(gridText) - 8
 	helpView := m.help.View(s.keys)
 	selectPointConfirmationText := lipgloss.JoinVertical(lipgloss.Left, text, "", helpView)
 
-	gridText := drawGrid(m, selectedPoints)
 	gridLayoutText := drawGridLayout(m, gridText, selectPointConfirmationText)
 
 	return gridLayoutText

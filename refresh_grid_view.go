@@ -95,9 +95,10 @@ func (r refreshGridView) update(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 
 func (r refreshGridView) draw(m model) string {
 	const text = "Refreshing grid..."
+	gridText := drawGrid(m, []vector2d{m.point1, m.point2})
+	m.help.Width = m.windowSize.x - lipgloss.Width(gridText) - 8
 	helpView := m.help.View(r.keys)
 	refreshGridText := lipgloss.JoinVertical(lipgloss.Left, text, "", helpView)
-	gridText := drawGrid(m, []vector2d{m.point1, m.point2})
 	gridLayoutText := drawGridLayout(m, gridText, refreshGridText)
 
 	return gridLayoutText

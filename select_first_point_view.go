@@ -195,16 +195,6 @@ func getInitialPoint2(point1 vector2d) vector2d {
 }
 
 func (s *selectFirstPointView) draw(m model) string {
-	const text = "Select two points to swap (selecting point 1)..."
-	var keys help.KeyMap
-	if s.showHint {
-		keys = s.hintKeys
-	} else {
-		keys = s.keys
-	}
-	helpView := m.help.View(keys)
-	selectFirstPointText := lipgloss.JoinVertical(lipgloss.Left, text, "", helpView)
-
 	var selectedPoints []vector2d
 	if s.showHint {
 		selectedPoints = findPotentialMatch(m.grid)
@@ -212,6 +202,17 @@ func (s *selectFirstPointView) draw(m model) string {
 		selectedPoints = []vector2d{m.point1}
 	}
 	gridText := drawGrid(m, selectedPoints)
+
+	const text = "Select two points to swap (selecting point 1)..."
+	var keys help.KeyMap
+	if s.showHint {
+		keys = s.hintKeys
+	} else {
+		keys = s.keys
+	}
+	m.help.Width = m.windowSize.x - lipgloss.Width(gridText) - 8
+	helpView := m.help.View(keys)
+	selectFirstPointText := lipgloss.JoinVertical(lipgloss.Left, text, "", helpView)
 
 	gridLayoutText := drawGridLayout(m, gridText, selectFirstPointText)
 

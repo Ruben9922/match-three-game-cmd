@@ -152,9 +152,10 @@ func (s *selectSecondPointView) toggleHelp(m model) (tea.Model, tea.Cmd) {
 
 func (s *selectSecondPointView) draw(m model) string {
 	const text = "Select two points to swap (selecting point 2)..."
+	gridText := drawGrid(m, []vector2d{m.point1, m.point2})
+	m.help.Width = m.windowSize.x - lipgloss.Width(gridText) - 8
 	helpView := m.help.View(s.keys)
 	selectSecondPointText := lipgloss.JoinVertical(lipgloss.Left, text, "", helpView)
-	gridText := drawGrid(m, []vector2d{m.point1, m.point2})
 	gridLayoutText := drawGridLayout(m, gridText, selectSecondPointText)
 
 	return gridLayoutText
