@@ -117,10 +117,23 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 	case tea.KeyMsg, tickMsg:
+		if !isWindowLargeEnough(m) {
+			return m, nil
+		}
+
 		return m.view.update(msg, m)
 	}
 
 	return m, nil
+}
+
+var minWindowSize = vector2d{
+	x: 80,
+	y: 21,
+}
+
+func isWindowLargeEnough(m model) bool {
+	return m.windowSize.x >= minWindowSize.x && m.windowSize.y >= minWindowSize.y
 }
 
 func newEndGameKeyBinding() key.Binding {
@@ -145,7 +158,14 @@ func newHelpKeyBinding(m model) key.Binding {
 }
 
 func (m model) View() string {
-	return lipgloss.NewStyle().Padding(2, 4).Render(m.view.draw(m))
+	if !isWindowLargeEnough(m) {
+		text := fmt.Sprintf("Window is too small. Please resize the window to at least %dx%d (currently %dx%d).",
+			minWindowSize.x, minWindowSize.y, m.windowSize.x, m.windowSize.y)
+		style := lipgloss.NewStyle().Width(m.windowSize.x).Height(m.windowSize.y)
+		return style.Render(text)
+	}
+
+	return lipgloss.NewStyle().Height(m.windowSize.y).Padding(2, 4).Render(m.view.draw(m))
 }
 
 func main() {
