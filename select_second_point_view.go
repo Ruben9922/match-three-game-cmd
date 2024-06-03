@@ -154,12 +154,8 @@ func (s *selectSecondPointView) draw(m model) string {
 	const text = "Select two points to swap (selecting point 2)..."
 	helpView := m.help.View(s.keys)
 	selectSecondPointText := lipgloss.JoinVertical(lipgloss.Left, text, "", helpView)
-
 	gridText := drawGrid(m, []vector2d{m.point1, m.point2})
+	gridLayoutText := drawGridLayout(m, gridText, selectSecondPointText)
 
-	return lipgloss.JoinHorizontal(
-		lipgloss.Top,
-		gridText,
-		lipgloss.NewStyle().Width(m.windowSize.x-lipgloss.Width(gridText)-8).PaddingLeft(3).Render(selectSecondPointText),
-	)
+	return gridLayoutText
 }

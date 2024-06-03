@@ -70,12 +70,8 @@ func (n noPossibleMovesView) draw(m model) string {
 		lipgloss.NewStyle().Bold(true).Render(n.keys.Confirm.Help().Key))
 	helpView := m.help.View(n.keys)
 	noMorePossibleMovesText := lipgloss.JoinVertical(lipgloss.Left, text, "", helpView)
-
 	gridText := drawGrid(m, []vector2d{m.point1, m.point2})
+	gridLayoutText := drawGridLayout(m, gridText, noMorePossibleMovesText)
 
-	return lipgloss.JoinHorizontal(
-		lipgloss.Top,
-		gridText,
-		lipgloss.NewStyle().Width(m.windowSize.x-lipgloss.Width(gridText)-8).PaddingLeft(3).Render(noMorePossibleMovesText),
-	)
+	return gridLayoutText
 }

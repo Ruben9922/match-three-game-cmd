@@ -85,3 +85,13 @@ func drawGrid(m model, selectedPoints []vector2d) string {
 
 	return lipgloss.JoinVertical(lipgloss.Left, gridString, "", scoreString, movesString, remainingMovesString)
 }
+
+func drawGridLayout(m model, gridText string, text string) string {
+	textStyle := lipgloss.NewStyle().Width(m.windowSize.x - lipgloss.Width(gridText) - 8).PaddingLeft(3)
+
+	return lipgloss.JoinHorizontal(
+		lipgloss.Top,
+		gridText,
+		textStyle.Render(text),
+	)
+}

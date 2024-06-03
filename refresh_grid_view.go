@@ -97,12 +97,8 @@ func (r refreshGridView) draw(m model) string {
 	const text = "Refreshing grid..."
 	helpView := m.help.View(r.keys)
 	refreshGridText := lipgloss.JoinVertical(lipgloss.Left, text, "", helpView)
-
 	gridText := drawGrid(m, []vector2d{m.point1, m.point2})
+	gridLayoutText := drawGridLayout(m, gridText, refreshGridText)
 
-	return lipgloss.JoinHorizontal(
-		lipgloss.Top,
-		gridText,
-		lipgloss.NewStyle().Width(m.windowSize.x-lipgloss.Width(gridText)-8).PaddingLeft(3).Render(refreshGridText),
-	)
+	return gridLayoutText
 }

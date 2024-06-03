@@ -93,10 +93,7 @@ func (s selectPointConfirmationView) draw(m model) string {
 	selectPointConfirmationText := lipgloss.JoinVertical(lipgloss.Left, text, "", helpView)
 
 	gridText := drawGrid(m, selectedPoints)
+	gridLayoutText := drawGridLayout(m, gridText, selectPointConfirmationText)
 
-	return lipgloss.JoinHorizontal(
-		lipgloss.Top,
-		gridText,
-		lipgloss.NewStyle().Width(m.windowSize.x-lipgloss.Width(gridText)-8).PaddingLeft(3).Render(selectPointConfirmationText),
-	)
+	return gridLayoutText
 }

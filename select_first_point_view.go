@@ -213,9 +213,7 @@ func (s *selectFirstPointView) draw(m model) string {
 	}
 	gridText := drawGrid(m, selectedPoints)
 
-	return lipgloss.JoinHorizontal(
-		lipgloss.Top,
-		gridText,
-		lipgloss.NewStyle().Width(m.windowSize.x-lipgloss.Width(gridText)-8).PaddingLeft(3).Render(selectFirstPointText),
-	)
+	gridLayoutText := drawGridLayout(m, gridText, selectFirstPointText)
+
+	return gridLayoutText
 }
