@@ -103,6 +103,6 @@ func (r refreshGridView) draw(m model) string {
 	return lipgloss.JoinHorizontal(
 		lipgloss.Top,
 		gridText,
-		lipgloss.NewStyle().MarginLeft(3).Render(refreshGridText),
+		lipgloss.NewStyle().Width(m.windowSize.x-lipgloss.Width(gridText)-8).PaddingLeft(3).Render(refreshGridText),
 	)
 }

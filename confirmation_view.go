@@ -57,7 +57,9 @@ func (c confirmationView) update(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 
 func (c confirmationView) draw(m model) string {
 	helpView := m.help.View(c.keys)
-	return lipgloss.JoinVertical(lipgloss.Left, c.text, "", helpView)
+	return lipgloss.NewStyle().
+		Width(m.windowSize.x - 8).
+		Render(lipgloss.JoinVertical(lipgloss.Left, c.text, "", helpView))
 }
 
 func newQuitConfirmationView() quitConfirmationView {

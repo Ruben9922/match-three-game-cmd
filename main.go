@@ -74,6 +74,7 @@ type model struct {
 	point2       vector2d
 	help         help.Model
 	symbolSet    symbolSet
+	windowSize   vector2d
 }
 
 func initialModel(r *rand.Rand) model {
@@ -110,6 +111,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.help.Width = msg.Width
+		m.windowSize = vector2d{
+			x: msg.Width,
+			y: msg.Height,
+		}
 
 	case tea.KeyMsg, tickMsg:
 		return m.view.update(msg, m)

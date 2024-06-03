@@ -97,6 +97,6 @@ func (s selectPointConfirmationView) draw(m model) string {
 	return lipgloss.JoinHorizontal(
 		lipgloss.Top,
 		gridText,
-		lipgloss.NewStyle().MarginLeft(3).Render(selectPointConfirmationText),
+		lipgloss.NewStyle().Width(m.windowSize.x-lipgloss.Width(gridText)-8).PaddingLeft(3).Render(selectPointConfirmationText),
 	)
 }
