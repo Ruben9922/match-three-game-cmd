@@ -102,7 +102,7 @@ func (s *selectSecondPointView) update(msg tea.Msg, m model) (tea.Model, tea.Cmd
 
 			return showSelectPointConfirmationView(m)
 		case key.Matches(msg, s.keys.Cancel):
-			return showSelectFirstPointView(m)
+			return returnToSelectFirstPointView(m)
 		}
 
 		var point2Updated vector2d
