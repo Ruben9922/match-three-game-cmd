@@ -55,11 +55,21 @@ const moveLimit int = 20
 
 const emptySymbol int = -1
 
-const whiteColor = lipgloss.Color("15")
-const blackColor = lipgloss.Color("0")
-const accentColor = lipgloss.Color("105")
+var whiteColor = lipgloss.AdaptiveColor{
+	Light: "8",
+	Dark:  "7",
+}
+var blackColor = lipgloss.AdaptiveColor{
+	Light: "15",
+	Dark:  "0",
+}
 
-var highlightedStyle = lipgloss.NewStyle().Background(whiteColor).Foreground(blackColor)
+var accentColor = lipgloss.AdaptiveColor{
+	Light: "12",
+	Dark:  "4",
+}
+
+var highlightedStyle = lipgloss.NewStyle().Background(whiteColor).Foreground(blackColor).Bold(true)
 var secondaryTextStyle = help.New().Styles.ShortDesc
 
 type model struct {

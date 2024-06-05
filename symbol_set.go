@@ -46,7 +46,7 @@ func newEmojiSymbolSet() plainSymbolSet {
 
 type colorSymbolSet struct {
 	plainSymbolSet
-	symbolColors [symbolCount]lipgloss.Color
+	symbolColors [symbolCount]lipgloss.AdaptiveColor
 }
 
 func (c colorSymbolSet) getSymbolColor(symbol int) lipgloss.TerminalColor {
@@ -66,19 +66,37 @@ func (c colorSymbolSet) formatSymbol(symbol int) string {
 func (c colorSymbolSet) formatSymbolHighlighted(symbol int) string {
 	color := c.getSymbolColor(symbol)
 	symbolRune := c.getSymbolRune(symbol)
-	return lipgloss.NewStyle().Background(color).Render(symbolRune)
+	return lipgloss.NewStyle().Background(color).Foreground(blackColor).Render(symbolRune)
 }
 
 func newColorSymbolSet(name string, symbolRunes [symbolCount]rune) colorSymbolSet {
 	return colorSymbolSet{
 		plainSymbolSet: plainSymbolSet{name: name, symbolRunes: symbolRunes},
-		symbolColors: [symbolCount]lipgloss.Color{
-			"205",
-			"34",
-			"33",
-			"220",
-			"93",
-			"37",
+		symbolColors: [symbolCount]lipgloss.AdaptiveColor{
+			{
+				Light: "22",
+				Dark:  "9",
+			},
+			{
+				Light: "202",
+				Dark:  "11",
+			},
+			{
+				Light: "5",
+				Dark:  "10",
+			},
+			{
+				Light: "6",
+				Dark:  "12",
+			},
+			{
+				Light: "21",
+				Dark:  "13",
+			},
+			{
+				Light: "124",
+				Dark:  "14",
+			},
 		},
 	}
 }
