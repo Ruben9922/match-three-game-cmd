@@ -75,6 +75,7 @@ type model struct {
 	help         help.Model
 	symbolSet    symbolSet
 	windowSize   vector2d
+	hintShown    bool
 }
 
 func initialModel(r *rand.Rand) model {
@@ -88,6 +89,7 @@ func initialModel(r *rand.Rand) model {
 		point2:    emptyVector2d,
 		help:      help.New(),
 		symbolSet: newEmojiSymbolSet(),
+		hintShown: false,
 	}
 }
 

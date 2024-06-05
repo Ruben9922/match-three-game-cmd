@@ -69,8 +69,14 @@ func (r refreshGridView) update(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 	}
 
 	finished := false
+	var scorePointer *int // If hint was shown, don't update the score (both for the player's match and cascading matches)
+	if m.hintShown {
+		scorePointer = nil
+	} else {
+		scorePointer = &m.score
+	}
 	for {
-		finished = refreshGrid(&m.grid, m.rand, &m.score)
+		finished = refreshGrid(&m.grid, m.rand, scorePointer)
 
 		if finished {
 			isPlaying := m.options.gameType != LimitedMoves || m.moveCount < moveLimit

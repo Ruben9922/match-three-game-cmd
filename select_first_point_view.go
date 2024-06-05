@@ -10,6 +10,7 @@ import (
 func showSelectFirstPointView(m model) (tea.Model, tea.Cmd) {
 	m.help.ShowAll = false                                   // Important that this is updated before creating the view
 	m.point1 = vector2d{x: gridWidth / 2, y: gridHeight / 2} // Initialise point 1 to centre of grid
+	m.hintShown = false
 
 	s := newSelectFirstPointView(m)
 	m.view = &s
@@ -138,7 +139,11 @@ func (s *selectFirstPointView) update(msg tea.Msg, m model) (tea.Model, tea.Cmd)
 			return s.toggleHelp(m)
 
 		case key.Matches(msg, s.keys.ToggleHint):
+			// Show hint
 			s.showHint = true
+
+			// Update flag so match isn't scored
+			m.hintShown = true
 
 		case key.Matches(msg, s.keys.Select):
 			return showSelectSecondPointView(m)
