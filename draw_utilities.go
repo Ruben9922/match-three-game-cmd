@@ -95,3 +95,10 @@ func drawGridLayout(m model, gridText string, text string) string {
 		textStyle.Render(text),
 	)
 }
+
+func drawTitleBar(m model) string {
+	titleBarStyle := lipgloss.NewStyle().Background(whiteColor).Foreground(blackColor).Bold(true)
+	leftText := strings.Repeat(" ", lipgloss.Width(version))
+	centerText := lipgloss.PlaceHorizontal(m.windowSize.x-(2*lipgloss.Width(version)), lipgloss.Center, "MATCH THREE GAME")
+	return titleBarStyle.Render(lipgloss.JoinHorizontal(lipgloss.Top, leftText, centerText, version))
+}

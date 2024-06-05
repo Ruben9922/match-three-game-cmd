@@ -165,7 +165,10 @@ func (m model) View() string {
 		return style.Render(text)
 	}
 
-	return lipgloss.NewStyle().Height(m.windowSize.y).Render(lipgloss.JoinVertical(lipgloss.Left, lipgloss.NewStyle().Background(whiteColor).Foreground(blackColor).Bold(true).Render(lipgloss.PlaceHorizontal(m.windowSize.x, lipgloss.Center, "MATCH THREE GAME")), lipgloss.PlaceHorizontal(m.windowSize.x, lipgloss.Center, lipgloss.NewStyle().Padding(2, 4).Render(m.view.draw(m)))))
+	titleBar := drawTitleBar(m)
+	mainView := lipgloss.PlaceHorizontal(m.windowSize.x, lipgloss.Center,
+		lipgloss.NewStyle().Padding(2, 4).Render(m.view.draw(m)))
+	return lipgloss.NewStyle().Height(m.windowSize.y).Render(lipgloss.JoinVertical(lipgloss.Left, titleBar, mainView))
 }
 
 func main() {
