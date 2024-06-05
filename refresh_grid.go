@@ -49,7 +49,7 @@ func refreshGrid(g *grid, r *rand.Rand, score *int) bool {
 		}
 
 		if score != nil {
-			matchesScore := computeScore(matches)
+			matchesScore := computeMatchesScore(matches)
 			*score += matchesScore
 		}
 
@@ -155,13 +155,26 @@ func isSubset[T comparable](possibleSubset, s []T) bool {
 	return true
 }
 
-func computeScore(matches [][]vector2d) int {
-	totalSymbolCount := 0
-	for _, m := range matches {
-		totalSymbolCount += len(m)
+func computeTriangleNumber(n int) int {
+	return n * (n + 1) / 2
+}
+
+func computeMatchScore(match []vector2d) int {
+	if len(match) < minMatchLength {
+		return 0
 	}
-	score := totalSymbolCount * scorePerMatchedSymbol
-	return score
+
+	baseScore := len(match) * scorePerMatchedSymbol
+	longMatchBonus := computeTriangleNumber(len(match)-minMatchLength) * 100
+	return baseScore + longMatchBonus
+}
+
+func computeMatchesScore(matches [][]vector2d) (matchesScore int) {
+	matchesScore = 0
+	for _, match := range matches {
+		matchesScore += computeMatchScore(match)
+	}
+	return
 }
 
 func flatten[T any](s [][]T) (flattened []T) {
