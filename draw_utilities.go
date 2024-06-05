@@ -97,8 +97,9 @@ func drawGridLayout(m model, gridText string, text string) string {
 }
 
 func drawTitleBar(m model) string {
-	titleBarStyle := lipgloss.NewStyle().Background(whiteColor).Foreground(blackColor).Bold(true)
+	horizontalPadding := 2
+	titleBarStyle := lipgloss.NewStyle().Background(whiteColor).Foreground(blackColor).Bold(true).Padding(0, horizontalPadding)
 	leftText := strings.Repeat(" ", lipgloss.Width(version))
-	centerText := lipgloss.PlaceHorizontal(m.windowSize.x-(2*lipgloss.Width(version)), lipgloss.Center, "MATCH THREE GAME")
+	centerText := lipgloss.PlaceHorizontal(m.windowSize.x-(2*lipgloss.Width(version))-(horizontalPadding*2), lipgloss.Center, "MATCH THREE GAME")
 	return titleBarStyle.Render(lipgloss.JoinHorizontal(lipgloss.Top, leftText, centerText, version))
 }
