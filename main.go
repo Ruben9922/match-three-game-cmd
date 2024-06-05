@@ -141,7 +141,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 var minWindowSize = vector2d{
 	x: 80,
-	y: 21,
+	y: 22,
 }
 
 func isWindowLargeEnough(m model) bool {
