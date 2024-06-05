@@ -36,7 +36,7 @@ func newSelectSecondPointViewKeys(m model) selectSecondPointViewKeyMap {
 			key.WithHelp("↵", "select"),
 		),
 		Cancel: key.NewBinding(
-			key.WithKeys("escape"),
+			key.WithKeys("esc"),
 			key.WithHelp("esc", "cancel"),
 		),
 		Up: key.NewBinding(
