@@ -127,12 +127,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			x: msg.Width,
 			y: msg.Height,
 		}
-
-	case tea.KeyMsg, tickMsg:
-		if !isWindowLargeEnough(m) {
-			return m, nil
+		if !isWindowLargeEnough(m) && m.view != (windowTooSmallView{}) {
+			return showWindowTooSmallView(m)
+		} else if isWindowLargeEnough(m) && m.view == (windowTooSmallView{}) && m.previousView != nil {
+			m.view = m.previousView
 		}
-
+	case tea.KeyMsg, tickMsg:
 		return m.view.update(msg, m)
 	}
 
@@ -170,13 +170,6 @@ func newHelpKeyBinding(m model) key.Binding {
 }
 
 func (m model) View() string {
-	if !isWindowLargeEnough(m) {
-		text := fmt.Sprintf("Window is too small. Please resize the window to at least %dx%d (currently %dx%d).",
-			minWindowSize.x, minWindowSize.y, m.windowSize.x, m.windowSize.y)
-		style := lipgloss.NewStyle().Width(m.windowSize.x).Height(m.windowSize.y)
-		return style.Render(text)
-	}
-
 	titleBar := drawTitleBar(m)
 	mainView := lipgloss.PlaceHorizontal(m.windowSize.x, lipgloss.Center,
 		lipgloss.NewStyle().Padding(2, 4).Render(m.view.draw(m)))
