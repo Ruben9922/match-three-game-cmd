@@ -209,9 +209,12 @@ func (s *selectFirstPointView) draw(m model) string {
 
 	var text string
 	if s.showHint {
-		text = "Showing hint.\n\nNo points will be scored for this move."
+		text = "Showing hint."
 	} else {
 		text = "Select two points to swap (selecting point 1)..."
+		if m.hintShown {
+			text += "\n\nNo points for this move since hint was shown."
+		}
 	}
 
 	var keys help.KeyMap
