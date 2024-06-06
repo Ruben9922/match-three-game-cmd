@@ -94,7 +94,7 @@ func (s selectPointConfirmationView) draw(m model) string {
 
 		selectedPoints = flatten(matches)
 	} else {
-		text = "Not swapping as swap would not result in a match.\nPlease try again."
+		text = "Not swapping as swap would not result in a match.\n\nPlease try again."
 		selectedPoints = []vector2d{m.point1, m.point2}
 	}
 
