@@ -45,10 +45,7 @@ func (c confirmationView) update(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, c.keys.Confirm):
 			return c.confirmAction(m)
 		case key.Matches(msg, c.keys.Cancel):
-			m.view = m.previousView
-			m.help.ShowAll = false
-
-			return m, nil
+			return showPreviousView(m)
 		}
 	}
 
@@ -83,11 +80,7 @@ func newQuitConfirmationView() quitConfirmationView {
 }
 
 func showQuitConfirmationView(m model) (tea.Model, tea.Cmd) {
-	m.previousView = m.view
-	m.view = newQuitConfirmationView()
-	m.help.ShowAll = false
-
-	return m, nil
+	return showModal(m, newQuitConfirmationView())
 }
 
 type quitConfirmationView struct {
@@ -114,11 +107,7 @@ func newEndGameConfirmationView() endGameConfirmationView {
 }
 
 func showEndGameConfirmationView(m model) (tea.Model, tea.Cmd) {
-	m.previousView = m.view
-	m.view = newEndGameConfirmationView()
-	m.help.ShowAll = false
-
-	return m, nil
+	return showModal(m, newEndGameConfirmationView())
 }
 
 type endGameConfirmationView struct {

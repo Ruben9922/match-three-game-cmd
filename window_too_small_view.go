@@ -8,11 +8,7 @@ import (
 )
 
 func showWindowTooSmallView(m model) (tea.Model, tea.Cmd) {
-	m.previousView = m.view
-	m.view = windowTooSmallView{}
-	m.help.ShowAll = false
-
-	return m, nil
+	return showModal(m, windowTooSmallView{})
 }
 
 type windowTooSmallViewKeyMap struct {

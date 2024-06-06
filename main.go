@@ -129,8 +129,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		if !isWindowLargeEnough(m) && m.view != (windowTooSmallView{}) {
 			return showWindowTooSmallView(m)
-		} else if isWindowLargeEnough(m) && m.view == (windowTooSmallView{}) && m.previousView != nil {
-			m.view = m.previousView
+		} else if isWindowLargeEnough(m) && m.view == (windowTooSmallView{}) {
+			return showPreviousView(m)
 		}
 	case tea.KeyMsg, tickMsg:
 		return m.view.update(msg, m)
