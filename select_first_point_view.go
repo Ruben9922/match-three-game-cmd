@@ -207,7 +207,13 @@ func (s *selectFirstPointView) draw(m model) string {
 	}
 	gridText := drawGrid(m, selectedPoints)
 
-	const text = "Select two points to swap (selecting point 1)..."
+	var text string
+	if s.showHint {
+		text = "Showing hint.\n\nNo points will be scored for this move."
+	} else {
+		text = "Select two points to swap (selecting point 1)..."
+	}
+
 	var keys help.KeyMap
 	if s.showHint {
 		keys = s.hintKeys
