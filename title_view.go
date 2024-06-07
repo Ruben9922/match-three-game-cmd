@@ -103,6 +103,8 @@ func (tv titleView) update(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, titleViewKeys.Start):
 			m.grid = newGridWithMatchesRemoved(m.rand)
 			ensurePotentialMatch(&m.grid, m.rand)
+			m.score = 0
+			m.moveCount = 0
 
 			return showSelectFirstPointView(m)
 		}
