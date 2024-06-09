@@ -1,5 +1,7 @@
 # Match-Three Game
 
+[![ruben-match-three-game](https://snapcraft.io/ruben-match-three-game/badge.svg)](https://snapcraft.io/ruben-match-three-game)
+[![goreleaser](https://github.com/Ruben9922/match-three-game-cmd/actions/workflows/release.yml/badge.svg)](https://github.com/Ruben9922/match-three-game-cmd/actions/workflows/release.yml)
 [![GitHub](https://img.shields.io/github/license/Ruben9922/match-three-game-cmd)](https://github.com/Ruben9922/match-three-game-cmd/blob/master/LICENSE)
 
 A match-three game for the terminal.
